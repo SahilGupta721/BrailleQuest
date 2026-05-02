@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSpeak } from "@/lib/useSpeak";
+import { useBrailleInput, dotsMatch } from "@/lib/useBrailleInput";
 
 type Screen =
   | "intro"
@@ -256,14 +257,29 @@ function LetterScreen({
   onConfirm: () => void;
 }) {
   const [confirmed, setConfirmed] = useState(false);
-  const sound = SOUND[letter];
-  const dots = BRAILLE[letter];
+  const [wrongAttempt, setWrongAttempt] = useState(false);
+  const targetDots = BRAILLE[letter];
+  const { dots: pressedDots, clear } = useBrailleInput(!confirmed);
 
   useEffect(() => {
     speak(
       `You found a letter. It is ${letter}. Make the letter ${letter} on your device.`,
     );
   }, [speak, letter]);
+
+  useEffect(() => {
+    setWrongAttempt(false);
+  }, [pressedDots]);
+
+  function checkLetter() {
+    if (dotsMatch(pressedDots, targetDots)) {
+      speak(`Correct. That is ${letter}.`);
+      setConfirmed(true);
+    } else {
+      speak("Not quite. Try again.");
+      setWrongAttempt(true);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-5">
@@ -272,22 +288,23 @@ function LetterScreen({
       </p>
       <Illustration />
       <h2 className="text-center text-xl font-semibold">{label}</h2>
-      <p className="text-center text-sm text-zinc-600">
-        Feel the pattern on your device
+      <p className="text-center text-6xl font-bold tracking-wider">{letter}</p>
+      <p className="text-center text-xs text-zinc-500">
+        Make the pattern on your device — keys W A S D F G map to dots 1 – 6
       </p>
       <div className="flex justify-center py-2">
-        <BrailleCell dots={dots} size="lg" />
+        <BrailleCell dots={Array.from(pressedDots)} size="lg" />
       </div>
-      <p className="text-center text-6xl font-bold tracking-wider">{letter}</p>
+      {wrongAttempt && (
+        <p className="text-center text-sm text-rose-600">
+          Not quite — try again.
+        </p>
+      )}
       {!confirmed ? (
-        <PrimaryButton
-          onClick={() => {
-            speak(`Correct. That is ${letter}.`);
-            setConfirmed(true);
-          }}
-        >
-          Check my letter
-        </PrimaryButton>
+        <div className="flex flex-col gap-2">
+          <PrimaryButton onClick={checkLetter}>Check my letter</PrimaryButton>
+          <SecondaryButton onClick={clear}>Clear</SecondaryButton>
+        </div>
       ) : (
         <>
           <div className="flex items-center justify-center gap-2 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
