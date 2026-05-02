@@ -328,6 +328,9 @@ type Speak = (text: string) => Promise<void>;
 const INTRO_NARRATION =
   "Travel seven worlds. Learn each creature's name. Defeat them.";
 
+const WELCOME_NARRATION =
+  "Welcome to BrailleQuest. This is an audio adventure where braille becomes magic. Listen carefully, press the correct braille dots, and cast spells to defeat each creature. Let's begin your quest.";
+
 const ISLANDS: { name: string; subtitle: string; image: string }[] = [
   {
     name: "Fire Pit",
@@ -362,11 +365,12 @@ function IntroScreen({
     return () => clearInterval(id);
   }, []);
 
-  // No narration on the welcome page — keep it silent. Audio starts on
-  // the next screen after the user has interacted with the page.
-
   function begin() {
     onStart();
+  }
+
+  function playWelcome() {
+    speak(WELCOME_NARRATION);
   }
 
   useEffect(() => {
@@ -396,7 +400,7 @@ function IntroScreen({
           Welcome back, Ethan
         </p>
         <h1 className="font-display text-center text-5xl font-bold leading-none tracking-tight text-black">
-          EchoSpell
+          BrailleQuest
         </h1>
       </div>
 
@@ -471,6 +475,13 @@ function IntroScreen({
           </kbd>{" "}
           to continue to level select
         </p>
+        <button
+          type="button"
+          onClick={playWelcome}
+          className="w-full rounded-full border border-black bg-white px-6 py-3.5 text-sm font-semibold tracking-wide text-black transition hover:bg-neutral-100"
+        >
+          🔊 Play Welcome
+        </button>
         <button
           type="button"
           onClick={begin}

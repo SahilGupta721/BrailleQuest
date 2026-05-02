@@ -15,7 +15,7 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: "EchoSpell — learn its name, speak its name, defeat it",
+  title: "BrailleQuest — learn its name, speak its name, defeat it",
   description:
     "A braille-first audio adventure. Travel seven worlds, learn each creature's name, and restore the light.",
 };
