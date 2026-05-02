@@ -128,7 +128,7 @@ function TopBar({ streak, xp }: { streak: number; xp: number }) {
   return (
     <header className="mx-auto flex w-full max-w-xl shrink-0 items-center justify-between px-5 pt-3 pb-1 sm:pt-4">
       <div className="font-display text-xl font-bold text-[var(--accent)]">
-        EchoSpell
+        BrailleQuest
       </div>
       <div className="flex items-center gap-2">
         <div className="badge-streak" aria-label={`Streak ${streak}`}>
@@ -154,11 +154,11 @@ function BottomNav({
     label: string;
     icon: React.ReactNode;
   }[] = [
-    { id: "home", label: "home", icon: <IconHome /> },
-    { id: "letters", label: "letters", icon: <IconCheck /> },
-    { id: "progress", label: "progress", icon: <IconStar /> },
-    { id: "profile", label: "profile", icon: <IconUser /> },
-  ];
+      { id: "home", label: "home", icon: <IconHome /> },
+      { id: "letters", label: "letters", icon: <IconCheck /> },
+      { id: "progress", label: "progress", icon: <IconStar /> },
+      { id: "profile", label: "profile", icon: <IconUser /> },
+    ];
   return (
     <nav className="bottom-nav z-20 shrink-0">
       <ul className="mx-auto flex max-w-xl items-center justify-around px-4 py-1.5">
@@ -371,7 +371,7 @@ function IntroScreen({
           <span>WORLD 1 — SCORCHED PLAINS</span>
         </span>
         <h1 className="font-display title-glow text-center text-5xl font-bold leading-none text-[var(--accent)]">
-          EchoSpell
+          BrailleQuest
         </h1>
         <p className="text-center text-xs text-[var(--muted)]">
           learn its name · speak its name · defeat it
@@ -748,13 +748,12 @@ function BattleScreen({
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className={`letter-tile ${
-              spelled[i]
-                ? "filled"
-                : i === spelled.length
-                  ? "active"
-                  : ""
-            }`}
+            className={`letter-tile ${spelled[i]
+              ? "filled"
+              : i === spelled.length
+                ? "active"
+                : ""
+              }`}
           >
             {spelled[i] ?? ""}
           </div>
