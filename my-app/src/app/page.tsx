@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useSpeak } from "@/lib/useSpeak";
 import { useBrailleInput, dotsMatch } from "@/lib/useBrailleInput";
 
@@ -669,7 +669,7 @@ function LetterScreen({
 
       <div
         key={shakeKey}
-        className={`flex w-full max-w-md items-start justify-center gap-12 ${wrongFeedback ? "shake" : ""}`}
+        className={`flex w-full max-w-2xl items-start justify-center gap-10 ${wrongFeedback ? "shake" : ""}`}
       >
         <div className="flex flex-col items-center gap-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
@@ -683,16 +683,33 @@ function LetterScreen({
           </p>
           <BrailleCell dots={pressedDots} size="lg" />
         </div>
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+            Keys
+          </p>
+          <div
+            className="grid grid-cols-2 gap-2"
+            aria-label="W A S for dots 1 2 3, D F G for dots 4 5 6"
+          >
+            {[
+              ["W", "D"],
+              ["A", "F"],
+              ["S", "G"],
+            ].map(([left, right]) => (
+              <Fragment key={left}>
+                <kbd className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 font-mono text-xs font-semibold text-black">
+                  {left}
+                </kbd>
+                <kbd className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 font-mono text-xs font-semibold text-black">
+                  {right}
+                </kbd>
+              </Fragment>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="flex w-full max-w-xs flex-col items-center gap-3">
-        <p className="text-center text-sm text-neutral-600">
-          Press{" "}
-          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
-            Y H N U J M
-          </kbd>{" "}
-          for dots 1–6
-        </p>
         {wrongFeedback ? (
           <p className="text-center text-xs font-semibold text-neutral-700">
             {wrongFeedback}
