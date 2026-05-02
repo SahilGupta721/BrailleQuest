@@ -1,6 +1,6 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
-const DEFAULT_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb"; // George
+const DEFAULT_VOICE_ID = "cgSgspJ2msm6clMCkdW9"; // Belle
 
 const audioCache = new Map<string, Buffer>();
 

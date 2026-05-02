@@ -39,7 +39,8 @@ export default function Home() {
   const { speak, stop } = useSpeak();
 
   useEffect(() => {
-    return stop;
+    if (screen === "intro") return;
+    stop();
   }, [screen, stop]);
 
   return (
@@ -362,7 +363,9 @@ function IntroScreen({
   speak: Speak;
   onStart: () => void;
 }) {
+
   const progress = ((CURRENT_WORLD_INDEX + 1) / TOTAL_WORLDS) * 100;
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col items-center gap-1.5">
@@ -413,7 +416,15 @@ function IntroScreen({
       </div>
 
       <div className="flex flex-col gap-2">
-        <PrimaryButton onClick={onStart}>Begin Your Quest →</PrimaryButton>
+        {/* // In IntroScreen — remove the useEffect entirely, and update the button: */}
+        <PrimaryButton
+          onClick={async () => {
+            await speak("Welcome to BrailleQuest! Press the dots. Defeat the creatures. Let's go!");
+            onStart(); // navigate AFTER speech finishes
+          }}
+        >
+          Begin Your Quest →
+        </PrimaryButton>
         <GhostButton onClick={() => speak(INTRO_NARRATION)}>
           Continue Journey
         </GhostButton>
@@ -429,9 +440,12 @@ function WorldScreen({
   speak: Speak;
   onEnter: () => void;
 }) {
-  useEffect(() => {
-    speak("Scorched plains. Find all the letters. Spell its name to defeat it.");
-  }, [speak]);
+  // In IntroScreen — replace the existing useEffect with this:
+  // useEffect(() => {
+  //   speak(
+  //     "Welcome to BrailleQuest. This is an audio adventure where braille becomes magic. Listen carefully, press the correct braille dots, and cast spells to defeat each creature. Let's begin your quest."
+  //   );
+  // }, [speak]);
 
   return (
     <div className="flex flex-col gap-3">
