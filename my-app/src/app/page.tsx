@@ -330,14 +330,14 @@ const INTRO_NARRATION =
 
 const ISLANDS: { name: string; subtitle: string; image: string }[] = [
   {
-    name: "Ember Isle",
+    name: "Fire Pit",
     subtitle: "Spell ASH",
-    image: "/island%20images/Image_(Island_quest_map)-1.png",
+    image: "/island%20images/Image_(Island_quest_map)-2.png",
   },
   {
     name: "Frostpoint",
     subtitle: "Spell ICE",
-    image: "/island%20images/Image_(Island_quest_map)-2.png",
+    image: "/island%20images/Image_(Island_quest_map)-1.png",
   },
   {
     name: "Tide Hollow",
@@ -410,6 +410,7 @@ function IntroScreen({
         }}
       >
         {ISLANDS.map((isle, i) => {
+          const isFire = isle.name === "Fire Pit";
           const offset = (i - active + ISLANDS.length) % ISLANDS.length;
           const pos = offset === 2 ? -1 : offset; // -1 left, 0 center, 1 right
           const isActive = pos === 0;
@@ -447,9 +448,11 @@ function IntroScreen({
                   width: 400,
                   height: 400,
                   backgroundImage: `url('${isle.image}')`,
-                  filter: isActive
-                    ? "drop-shadow(0 32px 40px rgba(0,0,0,0.28))"
-                    : "drop-shadow(0 16px 24px rgba(0,0,0,0.18))",
+                  filter: `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}${
+                    isActive
+                      ? "drop-shadow(0 32px 40px rgba(0,0,0,0.28))"
+                      : "drop-shadow(0 16px 24px rgba(0,0,0,0.18))"
+                  }`,
                   animation: isActive
                     ? "islandFloat 6s ease-in-out infinite"
                     : undefined,
@@ -519,6 +522,7 @@ function WorldScreen({
         {ISLANDS.map((isle, i) => {
           const isCurrent = i === 0;
           const isLocked = i > 0;
+          const isFire = isle.name === "Fire Pit";
           return (
             <li key={isle.name} className="flex flex-col items-center">
               <button
@@ -548,7 +552,7 @@ function WorldScreen({
                     opacity: isLocked ? 0.45 : 1,
                     filter: isLocked
                       ? "grayscale(1) drop-shadow(0 18px 24px rgba(0,0,0,0.14))"
-                      : "drop-shadow(0 32px 38px rgba(0,0,0,0.28))",
+                      : `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}drop-shadow(0 32px 38px rgba(0,0,0,0.28))`,
                     animation: isCurrent
                       ? "islandFloat 5s ease-in-out infinite"
                       : undefined,
@@ -607,7 +611,15 @@ function LetterScreen({
   useEffect(() => {
     if (letter === "A") {
       speak(
-        "You're in the Scorched Plains! A big scary creature is hiding here. It stole the sun! Find its three secret letters and learn its name, then you can defeat it! Your first letter is A. Make the letter A on your device.",
+        "You're in the Fire Pit! A big scary monster is hiding here. It stole the sun! Find its three secret letters and learn its name, then you can defeat it! You stumbled upon an old stone! Turn it over... It's a secret letter. This is A. Can you write it?",
+      );
+    } else if (letter === "S") {
+      speak(
+        "You hear a whisper from behind a tree. It says, the second letter is S. Can you write S?",
+      );
+    } else if (letter === "H") {
+      speak(
+        "One letter is still missing. You follow tiny sparks across the ground until they lead you to a magical flower. The flower shapes itself into the letter H. Can you write H?",
       );
     } else {
       speak(
@@ -622,7 +634,17 @@ function LetterScreen({
 
   function checkLetter() {
     if (dotsMatch(pressedDots, targetDots)) {
-      speak(`Correct. That is ${letter}.`);
+      if (letter === "A") {
+        speak("That's it! You made the letter A!");
+      } else if (letter === "S") {
+        speak(
+          "Nice work! You made the letter S! The creature growls, but it sounds smaller now.",
+        );
+      } else if (letter === "H") {
+        speak("Amazing! You made the letter H!");
+      } else {
+        speak(`Correct. That is ${letter}.`);
+      }
       setConfirmed(true);
       return;
     }
@@ -750,7 +772,7 @@ function BlendingScreen({
 
   useEffect(() => {
     speak(
-      "You found all the letters! Suddenly, the boss Ash bursts out of nowhere and attacks you. Spell his name to defeat him!",
+      "You found all three letters. A... S... H. The creature's name is ASH. Spell his name to defeat him!",
     );
   }, [speak]);
 
@@ -1014,7 +1036,9 @@ function VictoryScreen({
   onNext: () => void;
 }) {
   useEffect(() => {
-    speak("Congratulations. You defeated Ash.");
+    speak(
+      "A beam of light flashes. The creature crumbles down. The light returns to the sky, and the Fire Pit cools down. You defeated ASH by learning its name. Quest complete!",
+    );
   }, [speak]);
 
   return (
