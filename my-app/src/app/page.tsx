@@ -20,8 +20,31 @@ type Screen =
 //   3 6
 const BRAILLE: Record<string, number[]> = {
   A: [1],
-  S: [2, 3, 4],
+  B: [1, 2],
+  C: [1, 4],
+  D: [1, 4, 5],
+  E: [1, 5],
+  F: [1, 2, 4],
+  G: [1, 2, 4, 5],
   H: [1, 2, 5],
+  I: [2, 4],
+  J: [2, 4, 5],
+  K: [1, 3],
+  L: [1, 2, 3],
+  M: [1, 3, 4],
+  N: [1, 3, 4, 5],
+  O: [1, 3, 5],
+  P: [1, 2, 3, 4],
+  Q: [1, 2, 3, 4, 5],
+  R: [1, 2, 3, 5],
+  S: [2, 3, 4],
+  T: [2, 3, 4, 5],
+  U: [1, 3, 6],
+  V: [1, 2, 3, 6],
+  W: [2, 4, 5, 6],
+  X: [1, 3, 4, 6],
+  Y: [1, 3, 4, 5, 6],
+  Z: [1, 3, 5, 6],
 };
 
 const SOUND: Record<string, string> = {
@@ -257,7 +280,7 @@ function LetterScreen({
   onConfirm: () => void;
 }) {
   const [confirmed, setConfirmed] = useState(false);
-  const [wrongAttempt, setWrongAttempt] = useState(false);
+  const [wrongFeedback, setWrongFeedback] = useState<string | null>(null);
   const targetDots = BRAILLE[letter];
   const { dots: pressedDots, clear } = useBrailleInput(!confirmed);
 
@@ -268,18 +291,43 @@ function LetterScreen({
   }, [speak, letter]);
 
   useEffect(() => {
-    setWrongAttempt(false);
+    setWrongFeedback(null);
   }, [pressedDots]);
 
   function checkLetter() {
     if (dotsMatch(pressedDots, targetDots)) {
       speak(`Correct. That is ${letter}.`);
       setConfirmed(true);
+      return;
+    }
+    const made = (Object.keys(BRAILLE) as string[]).find((k) =>
+      dotsMatch(pressedDots, BRAILLE[k]),
+    );
+    if (made) {
+      speak(`That is ${made}. Try again.`);
+      setWrongFeedback(`That is ${made}. Try again.`);
+    } else if (pressedDots.size === 0) {
+      speak("No pattern. Try again.");
+      setWrongFeedback("No pattern — try again.");
     } else {
-      speak("Not quite. Try again.");
-      setWrongAttempt(true);
+      speak("That is not a letter we know. Try again.");
+      setWrongFeedback("That is not a letter we know. Try again.");
     }
   }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (confirmed) {
+        onConfirm();
+        return;
+      }
+      checkLetter();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -292,13 +340,22 @@ function LetterScreen({
       <p className="text-center text-xs text-zinc-500">
         Make the pattern on your device — keys W A S D F G map to dots 1 – 6
       </p>
-      <div className="flex justify-center py-2">
-        <BrailleCell dots={Array.from(pressedDots)} size="lg" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+          <p className="text-xs uppercase tracking-wider text-zinc-500">
+            Target
+          </p>
+          <BrailleCell dots={targetDots} size="lg" />
+        </div>
+        <div className="flex flex-col items-center gap-2 rounded-md border border-zinc-200 bg-white p-3">
+          <p className="text-xs uppercase tracking-wider text-zinc-500">
+            You pressed
+          </p>
+          <BrailleCell dots={Array.from(pressedDots)} size="lg" />
+        </div>
       </div>
-      {wrongAttempt && (
-        <p className="text-center text-sm text-rose-600">
-          Not quite — try again.
-        </p>
+      {wrongFeedback && (
+        <p className="text-center text-sm text-rose-600">{wrongFeedback}</p>
       )}
       {!confirmed ? (
         <div className="flex flex-col gap-2">
@@ -324,10 +381,24 @@ function BlendingScreen({
   speak: Speak;
   onContinue: () => void;
 }) {
-  const [step, setStep] = useState(0); // 0..2 individual, 3 blended
   const letters = ["A", "S", "H"];
 
-  // intentionally silent on entry to save credits
+  useEffect(() => {
+    speak(
+      "You found all the letters. The word is Ash. Say it back to me. Ash.",
+    );
+  }, [speak]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        onContinue();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onContinue]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -335,57 +406,31 @@ function BlendingScreen({
         Screen 3D — Blending
       </p>
       <h2 className="text-center text-lg font-semibold">
-        Let&apos;s say them one at a time
+        You found all the letters!
       </h2>
-      <div className="flex flex-col gap-3">
-        {letters.map((l, i) => (
-          <div
-            key={l}
-            className={`flex items-center gap-4 rounded-md border p-3 ${
-              i < step
-                ? "border-emerald-300 bg-emerald-50"
-                : i === step
-                  ? "border-zinc-900 bg-white"
-                  : "border-zinc-200 bg-zinc-50 opacity-60"
-            }`}
-          >
+      <p className="text-center text-sm text-zinc-700">
+        Your word is:
+      </p>
+      <p className="text-center text-6xl font-bold tracking-wider">Ash</p>
+      <div className="flex justify-center gap-4">
+        {letters.map((l) => (
+          <div key={l} className="flex flex-col items-center gap-2">
             <BrailleCell dots={BRAILLE[l]} />
-            <span className="flex-1 text-sm font-medium">
-              Say &quot;{SOUND[l]}&quot;
-            </span>
-            {i < step && <span className="text-xs text-emerald-700">✓</span>}
+            <span className="text-xs font-medium text-zinc-600">{l}</span>
           </div>
         ))}
       </div>
-      {step < 3 ? (
-        <PrimaryButton
-          onClick={() => {
-            speak(`Correct. That is ${letters[step]}.`);
-            setStep((s) => s + 1);
-          }}
-        >
-          Check my letter
-        </PrimaryButton>
-      ) : (
-        <>
-          <div className="rounded-md border border-zinc-300 bg-zinc-50 p-4 text-center">
-            <p className="text-xs text-zinc-500">
-              Now say them together — slowly
-            </p>
-            <p className="mt-2 text-lg text-zinc-700">Ah… Sss… Hh</p>
-            <p className="mt-2 text-xs text-zinc-500">Faster:</p>
-            <p className="mt-1 text-4xl font-bold tracking-wider">Ash</p>
-          </div>
-          <PrimaryButton
-            onClick={async () => {
-              await speak("Ash.");
-              onContinue();
-            }}
-          >
-            Continue
-          </PrimaryButton>
-        </>
-      )}
+      <p className="text-center text-sm font-medium text-zinc-900">
+        Say the word back: &quot;Ash&quot;
+      </p>
+      <PrimaryButton
+        onClick={async () => {
+          await speak("Ash.");
+          onContinue();
+        }}
+      >
+        Continue
+      </PrimaryButton>
     </div>
   );
 }
@@ -402,22 +447,61 @@ function BattleScreen({
   onWin: () => void;
 }) {
   const target = ["A", "S", "H"];
-  const options = ["A", "S", "H"];
   const isComplete = spelled.length === 3;
-  const isCorrect =
-    isComplete && spelled.every((l, i) => l === target[i]);
+  const isCorrect = isComplete && spelled.every((l, i) => l === target[i]);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const { dots, clear } = useBrailleInput(!isComplete);
 
-  // silent on entry
+  useEffect(() => {
+    speak("Spell its name!");
+  }, [speak]);
 
-  function pick(letter: string) {
-    if (spelled.length >= 3) return;
-    speak(SOUND[letter]);
-    setSpelled([...spelled, letter]);
-  }
+  useEffect(() => {
+    setFeedback(null);
+  }, [dots]);
 
   function reset() {
     setSpelled([]);
+    clear();
+    setFeedback(null);
   }
+
+  function submitLetter() {
+    if (isComplete) return;
+    const match = (Object.keys(BRAILLE) as string[]).find((k) =>
+      dotsMatch(dots, BRAILLE[k]),
+    );
+    if (!match) {
+      setFeedback("That's not a letter we know. Try again.");
+      speak("Try again.");
+      return;
+    }
+    const expected = target[spelled.length];
+    if (match !== expected) {
+      setFeedback(`That is ${match}. Not the next letter. Try again.`);
+      speak("Try again.");
+      clear();
+      return;
+    }
+    speak(`Correct. That is ${match}.`);
+    setSpelled([...spelled, match]);
+    clear();
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      if (isComplete && isCorrect) {
+        speak("Ash!");
+        onWin();
+      } else if (!isComplete) {
+        submitLetter();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -430,47 +514,73 @@ function BattleScreen({
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="flex h-14 w-14 items-center justify-center rounded-md border-2 border-zinc-400 bg-white text-2xl font-bold"
+            className={`flex h-14 w-14 items-center justify-center rounded-md border-2 text-2xl font-bold ${
+              spelled[i]
+                ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                : i === spelled.length
+                  ? "border-zinc-900 bg-white"
+                  : "border-zinc-300 bg-white text-zinc-300"
+            }`}
           >
             {spelled[i] ?? ""}
           </div>
         ))}
       </div>
-      <div className="flex justify-center gap-3">
-        {options.map((l) => (
-          <button
-            key={l}
-            type="button"
-            onClick={() => pick(l)}
-            disabled={isComplete}
-            className="rounded-md border border-zinc-300 bg-white p-3 transition hover:border-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <BrailleCell dots={BRAILLE[l]} />
-          </button>
-        ))}
-      </div>
-      {isComplete ? (
-        isCorrect ? (
-          <PrimaryButton
-            onClick={async () => {
-              await speak("Ash!");
-              onWin();
-            }}
-          >
-            Say the word: &quot;ASH&quot;
-          </PrimaryButton>
-        ) : (
-          <>
-            <p className="text-center text-sm text-rose-600">
-              Not quite. Try again.
-            </p>
-            <SecondaryButton onClick={reset}>Reset</SecondaryButton>
-          </>
-        )
-      ) : (
-        <p className="text-center text-xs italic text-zinc-500">
-          Creature approaching…
-        </p>
+      {!isComplete && (
+        <>
+          <p className="text-center text-xs text-zinc-500">
+            Make the letter for{" "}
+            <span className="font-bold text-zinc-900">
+              {target[spelled.length]}
+            </span>{" "}
+            on your device
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 p-3">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">
+                Hint: {target[spelled.length]}
+              </p>
+              <BrailleCell
+                dots={BRAILLE[target[spelled.length]]}
+                size="lg"
+              />
+            </div>
+            <div className="flex flex-col items-center gap-2 rounded-md border border-zinc-200 bg-white p-3">
+              <p className="text-xs uppercase tracking-wider text-zinc-500">
+                You pressed
+              </p>
+              <BrailleCell dots={Array.from(dots)} size="lg" />
+            </div>
+          </div>
+          {feedback && (
+            <p className="text-center text-sm text-rose-600">{feedback}</p>
+          )}
+          <div className="flex flex-col gap-2">
+            <PrimaryButton onClick={submitLetter}>Submit letter</PrimaryButton>
+            <SecondaryButton onClick={clear}>Clear</SecondaryButton>
+          </div>
+          <p className="text-center text-xs italic text-zinc-500">
+            Creature approaching…
+          </p>
+        </>
+      )}
+      {isComplete && isCorrect && (
+        <PrimaryButton
+          onClick={async () => {
+            await speak("Ash!");
+            onWin();
+          }}
+        >
+          Say the word: &quot;ASH&quot;
+        </PrimaryButton>
+      )}
+      {isComplete && !isCorrect && (
+        <>
+          <p className="text-center text-sm text-rose-600">
+            Not quite. Try again.
+          </p>
+          <SecondaryButton onClick={reset}>Reset</SecondaryButton>
+        </>
       )}
     </div>
   );
@@ -487,7 +597,7 @@ function VictoryScreen({
   const total = 7;
 
   useEffect(() => {
-    speak("Defeated.");
+    speak("Congratulations. You defeated Ash.");
   }, [speak]);
 
   return (
