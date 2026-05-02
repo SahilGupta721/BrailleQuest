@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const DEBOUNCE_MS = 2000;
+// How long after a key release to actually clear the dot. Filters Makey Makey
+// contact chatter where a held key briefly drops then re-fires.
+const RELEASE_DEBOUNCE_MS = 2000;
 
 // Makey Makey back-board defaults map to W A S D F G.
 // Braille cell numbering:
@@ -20,39 +22,67 @@ const KEY_TO_DOT: Record<string, number> = {
 
 export function useBrailleInput(enabled = true) {
   const [dots, setDots] = useState<Set<number>>(new Set());
-  const lastFiredRef = useRef<Record<number, number>>({});
+  const releaseTimersRef = useRef<Record<number, number>>({});
 
   useEffect(() => {
     if (!enabled) return;
-    lastFiredRef.current = {};
+
+    function cancelRelease(dot: number) {
+      const t = releaseTimersRef.current[dot];
+      if (t !== undefined) {
+        window.clearTimeout(t);
+        delete releaseTimersRef.current[dot];
+      }
+    }
 
     function onKeyDown(e: KeyboardEvent) {
       const dot = KEY_TO_DOT[e.key.toLowerCase()];
       if (!dot) return;
-      if (e.repeat) return;
-      const now = performance.now();
-      const last = lastFiredRef.current[dot] ?? 0;
-      if (now - last < DEBOUNCE_MS) {
-        e.preventDefault();
-        return;
-      }
-      lastFiredRef.current[dot] = now;
       e.preventDefault();
+      if (e.repeat) return;
+      cancelRelease(dot);
       setDots((prev) => {
+        if (prev.has(dot)) return prev;
         const next = new Set(prev);
-        if (next.has(dot)) next.delete(dot);
-        else next.add(dot);
+        next.add(dot);
         return next;
       });
     }
 
+    function onKeyUp(e: KeyboardEvent) {
+      const dot = KEY_TO_DOT[e.key.toLowerCase()];
+      if (!dot) return;
+      e.preventDefault();
+      cancelRelease(dot);
+      releaseTimersRef.current[dot] = window.setTimeout(() => {
+        delete releaseTimersRef.current[dot];
+        setDots((prev) => {
+          if (!prev.has(dot)) return prev;
+          const next = new Set(prev);
+          next.delete(dot);
+          return next;
+        });
+      }, RELEASE_DEBOUNCE_MS);
+    }
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      for (const t of Object.values(releaseTimersRef.current)) {
+        window.clearTimeout(t);
+      }
+      releaseTimersRef.current = {};
+    };
   }, [enabled]);
 
   const clear = useCallback(() => {
     setDots(new Set());
-    lastFiredRef.current = {};
+    for (const t of Object.values(releaseTimersRef.current)) {
+      window.clearTimeout(t);
+    }
+    releaseTimersRef.current = {};
   }, []);
 
   return { dots, clear };
