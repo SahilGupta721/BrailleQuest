@@ -331,6 +331,12 @@ const INTRO_NARRATION =
 const WELCOME_NARRATION =
   "Welcome to BrailleQuest. This is an audio adventure where braille becomes magic. Listen carefully, press the correct braille dots, and cast spells to defeat each creature. Let's begin your quest.";
 
+const LETTER_IMAGES: Record<string, string> = {
+  A: "/letter%20images/imageA.png",
+  S: "/letter%20images/ImageS.png",
+  H: "/letter%20images/ImageH.png",
+};
+
 const ISLANDS: { name: string; subtitle: string; image: string }[] = [
   {
     name: "Fire Pit",
@@ -452,6 +458,7 @@ function IntroScreen({
                   width: 400,
                   height: 400,
                   backgroundImage: `url('${isle.image}')`,
+                  mixBlendMode: "multiply",
                   filter: `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}${
                     isActive
                       ? "drop-shadow(0 32px 40px rgba(0,0,0,0.28))"
@@ -560,6 +567,7 @@ function WorldScreen({
                     width: 400,
                     height: 400,
                     backgroundImage: `url('${isle.image}')`,
+                    mixBlendMode: "multiply",
                     opacity: isLocked ? 0.45 : 1,
                     filter: isLocked
                       ? "grayscale(1) drop-shadow(0 18px 24px rgba(0,0,0,0.14))"
@@ -695,9 +703,18 @@ function LetterScreen({
         <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
           letter found
         </p>
-        <h2 className="font-display text-center text-[21rem] font-bold leading-none tracking-tight text-black">
+        <img
+          src={LETTER_IMAGES[letter] ?? ""}
+          alt={`Letter ${letter}`}
+          className="h-72 w-auto object-contain"
+          style={{
+            mixBlendMode: "multiply",
+            filter: "drop-shadow(0 24px 28px rgba(0,0,0,0.18))",
+          }}
+        />
+        <p className="font-display text-2xl font-bold leading-none tracking-tight text-black">
           {letter}
-        </h2>
+        </p>
       </div>
 
       <div
@@ -928,6 +945,7 @@ function BattleScreen({
           aria-hidden
           className="h-56 w-auto object-contain transition-all duration-500"
           style={{
+            mixBlendMode: "multiply",
             filter: isComplete
               ? "drop-shadow(0 32px 38px rgba(0,0,0,0.35))"
               : "drop-shadow(0 24px 28px rgba(0,0,0,0.25))",
@@ -965,7 +983,7 @@ function BattleScreen({
         {!isComplete && (
           <div
             key={shakeKey}
-            className={`flex items-start justify-center gap-12 ${feedback ? "shake" : ""}`}
+            className={`flex w-full max-w-2xl items-start justify-center gap-10 ${feedback ? "shake" : ""}`}
           >
             <div className="flex flex-col items-center gap-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
@@ -978,6 +996,30 @@ function BattleScreen({
                 You
               </p>
               <BrailleCell dots={dots} size="lg" />
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                Keys
+              </p>
+              <div
+                className="grid grid-cols-2 gap-2"
+                aria-label="W A S for dots 1 2 3, D F G for dots 4 5 6"
+              >
+                {[
+                  ["W", "D"],
+                  ["A", "F"],
+                  ["S", "G"],
+                ].map(([left, right]) => (
+                  <Fragment key={left}>
+                    <kbd className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 font-mono text-xs font-semibold text-black">
+                      {left}
+                    </kbd>
+                    <kbd className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 font-mono text-xs font-semibold text-black">
+                      {right}
+                    </kbd>
+                  </Fragment>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -1052,6 +1094,16 @@ function VictoryScreen({
     );
   }, [speak]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      onNext();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onNext]);
+
   return (
     <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
       <div className="flex flex-col items-center gap-2">
@@ -1070,6 +1122,7 @@ function VictoryScreen({
           aria-hidden
           className="h-72 w-auto object-contain"
           style={{
+            mixBlendMode: "multiply",
             filter: "drop-shadow(0 28px 32px rgba(0,0,0,0.25))",
           }}
         />
@@ -1079,6 +1132,13 @@ function VictoryScreen({
       </div>
 
       <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        <p className="text-center text-sm text-neutral-600">
+          Press{" "}
+          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+            Enter
+          </kbd>{" "}
+          to return to the islands
+        </p>
         <button
           type="button"
           onClick={onNext}
