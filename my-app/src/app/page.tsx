@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSpeak } from "@/lib/useSpeak";
 import { useBrailleInput, dotsMatch } from "@/lib/useBrailleInput";
 
@@ -19,23 +19,65 @@ type Screen =
 //   2 5
 //   3 6
 const BRAILLE: Record<string, number[]> = {
-  A: [1], B: [1, 2], C: [1, 4], D: [1, 4, 5], E: [1, 5], F: [1, 2, 4],
-  G: [1, 2, 4, 5], H: [1, 2, 5], I: [2, 4], J: [2, 4, 5], K: [1, 3],
-  L: [1, 2, 3], M: [1, 3, 4], N: [1, 3, 4, 5], O: [1, 3, 5], P: [1, 2, 3, 4],
-  Q: [1, 2, 3, 4, 5], R: [1, 2, 3, 5], S: [2, 3, 4], T: [2, 3, 4, 5],
-  U: [1, 3, 6], V: [1, 2, 3, 6], W: [2, 4, 5, 6], X: [1, 3, 4, 6],
-  Y: [1, 3, 4, 5, 6], Z: [1, 3, 5, 6],
+  A: [1],
+  B: [1, 2],
+  C: [1, 4],
+  D: [1, 4, 5],
+  E: [1, 5],
+  F: [1, 2, 4],
+  G: [1, 2, 4, 5],
+  H: [1, 2, 5],
+  I: [2, 4],
+  J: [2, 4, 5],
+  K: [1, 3],
+  L: [1, 2, 3],
+  M: [1, 3, 4],
+  N: [1, 3, 4, 5],
+  O: [1, 3, 5],
+  P: [1, 2, 3, 4],
+  Q: [1, 2, 3, 4, 5],
+  R: [1, 2, 3, 5],
+  S: [2, 3, 4],
+  T: [2, 3, 4, 5],
+  U: [1, 3, 6],
+  V: [1, 2, 3, 6],
+  W: [2, 4, 5, 6],
+  X: [1, 3, 4, 6],
+  Y: [1, 3, 4, 5, 6],
+  Z: [1, 3, 5, 6],
 };
 
 const TOTAL_WORLDS = 7;
-const CURRENT_WORLD_INDEX = 0; // 0-based
-const WORLD_NAME = "Scorched Plains";
+const CURRENT_WORLD_INDEX = 0; // 0-based — only world 1 unlocked
+
+const WORLDS: {
+  name: string;
+  subtitle: string;
+  tone: "forest" | "ember";
+  emoji: string;
+}[] = [
+  {
+    name: "Scorched Plains",
+    subtitle: "Spell ASH",
+    tone: "ember",
+    emoji: "🔥",
+  },
+  { name: "Frozen Tundra", subtitle: "Spell ICE", tone: "forest", emoji: "❄" },
+  {
+    name: "Whispering Woods",
+    subtitle: "Spell OAK",
+    tone: "forest",
+    emoji: "🌲",
+  },
+  { name: "Sunken Reef", subtitle: "Spell SEA", tone: "forest", emoji: "🌊" },
+  { name: "Ember Caves", subtitle: "Spell ORE", tone: "ember", emoji: "🪨" },
+  { name: "Sky Citadel", subtitle: "Spell SKY", tone: "forest", emoji: "☁" },
+  { name: "Star's End", subtitle: "Final boss", tone: "forest", emoji: "✦" },
+];
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("intro");
   const [spelled, setSpelled] = useState<string[]>([]);
-  const [streak, setStreak] = useState(3);
-  const [xp, setXp] = useState(240);
   const { speak, stop } = useSpeak();
 
   useEffect(() => {
@@ -43,15 +85,10 @@ export default function Home() {
   }, [screen, stop]);
 
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden">
-      <TopBar streak={streak} xp={xp} />
-
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-white text-black">
       <main className="mx-auto flex w-full max-w-xl flex-1 min-h-0 flex-col justify-center overflow-hidden px-5 py-2">
         {screen === "intro" && (
-          <IntroScreen
-            speak={speak}
-            onStart={() => setScreen("world")}
-          />
+          <IntroScreen speak={speak} onStart={() => setScreen("world")} />
         )}
         {screen === "world" && (
           <WorldScreen speak={speak} onEnter={() => setScreen("letterA")} />
@@ -59,49 +96,36 @@ export default function Home() {
         {screen === "letterA" && (
           <LetterScreen
             speak={speak}
-            label="You found a letter"
             letter="A"
-            onConfirm={() => {
-              setXp((x) => x + 10);
-              setScreen("letterS");
-            }}
+            onConfirm={() => setScreen("letterS")}
           />
         )}
         {screen === "letterS" && (
           <LetterScreen
             speak={speak}
-            label="Another letter"
             letter="S"
-            onConfirm={() => {
-              setXp((x) => x + 10);
-              setScreen("letterH");
-            }}
+            onConfirm={() => setScreen("letterH")}
           />
         )}
         {screen === "letterH" && (
           <LetterScreen
             speak={speak}
-            label="The final letter"
             letter="H"
-            onConfirm={() => {
-              setXp((x) => x + 10);
-              setScreen("blending");
-            }}
+            onConfirm={() => setScreen("blending")}
           />
         )}
         {screen === "blending" && (
-          <BlendingScreen speak={speak} onContinue={() => setScreen("battle")} />
+          <BlendingScreen
+            speak={speak}
+            onContinue={() => setScreen("battle")}
+          />
         )}
         {screen === "battle" && (
           <BattleScreen
             speak={speak}
             spelled={spelled}
             setSpelled={setSpelled}
-            onWin={() => {
-              setStreak((s) => s + 1);
-              setXp((x) => x + 50);
-              setScreen("victory");
-            }}
+            onWin={() => setScreen("victory")}
           />
         )}
         {screen === "victory" && (
@@ -109,72 +133,12 @@ export default function Home() {
             speak={speak}
             onNext={() => {
               setSpelled([]);
-              setScreen("intro");
+              setScreen("world");
             }}
           />
         )}
       </main>
-
-      <BottomNav active={screen === "intro" ? "home" : "letters"} />
     </div>
-  );
-}
-
-// ============================================================================
-// CHROME
-// ============================================================================
-
-function TopBar({ streak, xp }: { streak: number; xp: number }) {
-  return (
-    <header className="mx-auto flex w-full max-w-xl shrink-0 items-center justify-between px-5 pt-3 pb-1 sm:pt-4">
-      <div className="font-display text-xl font-bold text-[var(--accent)]">
-        EchoSpell
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="badge-streak" aria-label={`Streak ${streak}`}>
-          <span className="icon" aria-hidden />
-          <span>{streak}</span>
-        </div>
-        <div className="badge-xp" aria-label={`${xp} experience points`}>
-          <span className="icon" aria-hidden />
-          <span>{xp} XP</span>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-function BottomNav({
-  active,
-}: {
-  active: "home" | "letters" | "progress" | "profile";
-}) {
-  const items: {
-    id: "home" | "letters" | "progress" | "profile";
-    label: string;
-    icon: React.ReactNode;
-  }[] = [
-    { id: "home", label: "home", icon: <IconHome /> },
-    { id: "letters", label: "letters", icon: <IconCheck /> },
-    { id: "progress", label: "progress", icon: <IconStar /> },
-    { id: "profile", label: "profile", icon: <IconUser /> },
-  ];
-  return (
-    <nav className="bottom-nav z-20 shrink-0">
-      <ul className="mx-auto flex max-w-xl items-center justify-around px-4 py-1.5">
-        {items.map((it) => (
-          <li key={it.id}>
-            <button
-              type="button"
-              className={`nav-item ${active === it.id ? "active" : ""}`}
-            >
-              <span aria-hidden>{it.icon}</span>
-              <span>{it.label}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
   );
 }
 
@@ -228,18 +192,14 @@ function BrailleCell({
   dots: number[] | Set<number>;
   size?: "sm" | "md" | "lg";
 }) {
-  const set =
-    dots instanceof Set ? dots : new Set(dots);
+  const set = dots instanceof Set ? dots : new Set(dots);
   const cell =
     size === "lg" ? "h-7 w-7" : size === "sm" ? "h-3.5 w-3.5" : "h-5 w-5";
   const gap = size === "lg" ? "gap-3" : "gap-2";
   return (
     <div className={`grid grid-cols-2 ${gap}`}>
       {[1, 4, 2, 5, 3, 6].map((n) => (
-        <div
-          key={n}
-          className={`dot-cell ${cell} ${set.has(n) ? "on" : ""}`}
-        />
+        <div key={n} className={`dot-cell ${cell} ${set.has(n) ? "on" : ""}`} />
       ))}
     </div>
   );
@@ -254,59 +214,83 @@ function HeroIllustration({
 }) {
   // Stylized layered SVG: hills + tree silhouettes + a few fireflies
   return (
-    <div className={`hero-card relative w-full ${compact ? "h-28" : "h-32"}`}>
+    <div className={`hero-card relative w-full ${compact ? "h-44" : "h-48"}`}>
       <svg
-        viewBox="0 0 600 200"
-        preserveAspectRatio="none"
+        viewBox="0 0 600 220"
+        preserveAspectRatio="xMidYMax slice"
         className="absolute inset-0 h-full w-full"
         aria-hidden
       >
         <defs>
           <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1d3a26" />
-            <stop offset="100%" stopColor="#0f2418" />
+            <stop offset="0%" stopColor="#21422c" />
+            <stop offset="100%" stopColor="#0a1a10" />
           </linearGradient>
           <linearGradient id="emberGround" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3a1a14" />
+            <stop offset="0%" stopColor="#4a201a" />
             <stop offset="100%" stopColor="#1a0a08" />
           </linearGradient>
         </defs>
 
-        {/* far hill */}
+        {/* ground hill */}
         <path
-          d="M0 150 Q 150 110 300 140 T 600 130 L600 200 L0 200 Z"
+          d="M0 165 Q 150 125 300 155 T 600 145 L600 220 L0 220 Z"
           fill={tone === "ember" ? "url(#emberGround)" : "url(#ground)"}
-          opacity={0.85}
         />
 
-        {/* trees */}
+        {/* trees — taller, varied heights, two clusters */}
         {[
-          [70, 150], [130, 145], [200, 152], [260, 142],
-          [340, 150], [400, 140], [470, 152], [540, 145],
-        ].map(([x, y], i) => (
-          <g key={i} transform={`translate(${x},${y})`}>
+          [55, 165, 1.0],
+          [100, 170, 0.8],
+          [148, 162, 1.15],
+          [205, 168, 0.95],
+          [395, 168, 1.0],
+          [445, 172, 0.85],
+          [498, 160, 1.2],
+          [552, 170, 0.9],
+        ].map(([x, y, s], i) => (
+          <g key={i} transform={`translate(${x},${y}) scale(${s})`}>
             <polygon
-              points="0,0 -22,40 22,40"
+              points="0,-15 -28,55 28,55"
               fill={tone === "ember" ? "#1c0d09" : "#0a1a10"}
             />
             <polygon
-              points="0,-12 -18,28 18,28"
+              points="0,-35 -22,38 22,38"
               fill={tone === "ember" ? "#2a140e" : "#10261a"}
             />
-            <rect x="-3" y="36" width="6" height="10" fill="#070d0a" />
+            <polygon
+              points="0,-52 -16,18 16,18"
+              fill={tone === "ember" ? "#3a1c12" : "#163522"}
+            />
+            <rect x="-3" y="50" width="6" height="14" fill="#050a06" />
           </g>
         ))}
 
-        {/* fireflies */}
+        {/* fireflies — clustered in the gap between tree groups */}
         <g>
-          <circle cx="120" cy="80" r="2" fill="#ffd95a">
-            <animate attributeName="opacity" values="0.3;1;0.3" dur="2.4s" repeatCount="indefinite" />
+          <circle cx="280" cy="100" r="2" fill="#ffd95a">
+            <animate
+              attributeName="opacity"
+              values="0.3;1;0.3"
+              dur="2.4s"
+              repeatCount="indefinite"
+            />
           </circle>
-          <circle cx="380" cy="60" r="2" fill="#ffd95a">
-            <animate attributeName="opacity" values="1;0.3;1" dur="3.1s" repeatCount="indefinite" />
+          <circle cx="320" cy="130" r="1.8" fill="#ffd95a">
+            <animate
+              attributeName="opacity"
+              values="1;0.3;1"
+              dur="3.1s"
+              repeatCount="indefinite"
+            />
           </circle>
-          <circle cx="500" cy="90" r="2" fill="#ffd95a">
-            <animate attributeName="opacity" values="0.4;1;0.4" dur="2.7s" repeatCount="indefinite" />
+          <circle cx="370" cy="115" r="2" fill="#ffd95a">
+            <animate
+              attributeName="opacity"
+              values="0.4;1;0.4"
+              dur="2.7s"
+              repeatCount="indefinite"
+            />
           </circle>
         </g>
       </svg>
@@ -316,32 +300,21 @@ function HeroIllustration({
 
 function CreatureIllustration({ defeated = false }: { defeated?: boolean }) {
   return (
-    <div className="hero-card relative h-32 w-full">
-      <svg
-        viewBox="0 0 600 200"
-        preserveAspectRatio="xMidYMid meet"
-        className="absolute inset-0 h-full w-full"
+    <div className="relative flex h-44 w-full items-center justify-center">
+      <img
+        src={defeated ? "/bossImages/defeatedboss.png" : "/bossImages/boss.png"}
+        alt=""
         aria-hidden
-      >
-        <defs>
-          <radialGradient id="ember" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={defeated ? "#ffd95a" : "#ff6b3d"} />
-            <stop offset="60%" stopColor={defeated ? "#f5c842" : "#b83820"} stopOpacity="0.6" />
-            <stop offset="100%" stopColor="transparent" />
-          </radialGradient>
-        </defs>
-        <ellipse cx="300" cy="120" rx="220" ry="60" fill="url(#ember)" opacity="0.6" />
-        {/* creature silhouette */}
-        <g transform="translate(300,120)">
-          <ellipse cx="0" cy="0" rx="70" ry="44" fill={defeated ? "#2a3a6a" : "#1a0d08"} opacity={defeated ? 0.6 : 1} />
-          <circle cx="-22" cy="-10" r="5" fill={defeated ? "#5fe3a1" : "#ffd95a"} />
-          <circle cx="22" cy="-10" r="5" fill={defeated ? "#5fe3a1" : "#ffd95a"} />
-          <path d="M-30 14 Q 0 30 30 14" stroke={defeated ? "#5fe3a1" : "#ffd95a"} strokeWidth="3" fill="none" strokeLinecap="round" />
-          {/* horns */}
-          <path d="M-50 -30 Q -60 -55 -40 -50" stroke={defeated ? "#2a3a6a" : "#1a0d08"} strokeWidth="6" fill="none" strokeLinecap="round" />
-          <path d="M50 -30 Q 60 -55 40 -50" stroke={defeated ? "#2a3a6a" : "#1a0d08"} strokeWidth="6" fill="none" strokeLinecap="round" />
-        </g>
-      </svg>
+        className="h-full w-auto object-contain transition-all duration-500"
+        style={{
+          filter: defeated
+            ? "drop-shadow(0 18px 22px rgba(0,0,0,0.2))"
+            : "drop-shadow(0 24px 28px rgba(0,0,0,0.28))",
+          animation: defeated
+            ? undefined
+            : "islandFloat 3.2s ease-in-out infinite",
+        }}
+      />
     </div>
   );
 }
@@ -353,7 +326,25 @@ function CreatureIllustration({ defeated = false }: { defeated?: boolean }) {
 type Speak = (text: string) => Promise<void>;
 
 const INTRO_NARRATION =
-  "Seven sun thieves have stolen the light. People are cold. Plants are dying. Travel through seven worlds, learn each creature's name, and defeat them.";
+  "Travel seven worlds. Learn each creature's name. Defeat them.";
+
+const ISLANDS: { name: string; subtitle: string; image: string }[] = [
+  {
+    name: "Ember Isle",
+    subtitle: "Spell ASH",
+    image: "/island%20images/Image_(Island_quest_map)-1.png",
+  },
+  {
+    name: "Frostpoint",
+    subtitle: "Spell ICE",
+    image: "/island%20images/Image_(Island_quest_map)-2.png",
+  },
+  {
+    name: "Tide Hollow",
+    subtitle: "Spell SEA",
+    image: "/island%20images/Image_(Island_quest_map)-3.png",
+  },
+];
 
 function IntroScreen({
   speak,
@@ -362,61 +353,128 @@ function IntroScreen({
   speak: Speak;
   onStart: () => void;
 }) {
-  const progress = ((CURRENT_WORLD_INDEX + 1) / TOTAL_WORLDS) * 100;
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setActive((i) => (i + 1) % ISLANDS.length);
+    }, 1500);
+    return () => clearInterval(id);
+  }, []);
+
+  // No narration on the welcome page — keep it silent. Audio starts on
+  // the next screen after the user has interacted with the page.
+
+  function begin() {
+    onStart();
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        begin();
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setActive((i) => (i + 1) % ISLANDS.length);
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setActive((i) => (i - 1 + ISLANDS.length) % ISLANDS.length);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-1.5">
-        <span className="pill">
-          <span className="dot" aria-hidden />
-          <span>WORLD 1 — SCORCHED PLAINS</span>
-        </span>
-        <h1 className="font-display title-glow text-center text-5xl font-bold leading-none text-[var(--accent)]">
+    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+          Welcome back, Ethan
+        </p>
+        <h1 className="font-display text-center text-5xl font-bold leading-none tracking-tight text-black">
           EchoSpell
         </h1>
-        <p className="text-center text-xs text-[var(--muted)]">
-          learn its name · speak its name · defeat it
-        </p>
       </div>
 
-      <div className="relative">
-        <HeroIllustration compact />
-        <div className="surface-inset absolute inset-x-4 -bottom-6 p-3">
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-2)]">
-            Your Quest
-          </p>
-          <p className="text-xs leading-snug text-[var(--text)]">
-            <span className="font-bold">Seven sun thieves</span>{" "}
-            <span className="text-[var(--muted)]">
-              have stolen the light. Travel 7 worlds — learn each creature&apos;s
-              name and defeat them.
-            </span>
-          </p>
-          <div className="mt-2 flex items-center gap-1">
-            {Array.from({ length: TOTAL_WORLDS }).map((_, i) => (
+      <div
+        className="relative w-full max-w-3xl"
+        style={{
+          height: 520,
+          perspective: 1800,
+          transform: "rotateX(14deg) rotateZ(-2deg)",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {ISLANDS.map((isle, i) => {
+          const offset = (i - active + ISLANDS.length) % ISLANDS.length;
+          const pos = offset === 2 ? -1 : offset; // -1 left, 0 center, 1 right
+          const isActive = pos === 0;
+          const transform =
+            pos === 0
+              ? "translate(-50%, -50%) translateZ(40px) scale(1)"
+              : pos === 1
+                ? "translate(-50%, -50%) translateX(300px) translateZ(-60px) rotateY(-22deg) scale(0.78)"
+                : "translate(-50%, -50%) translateX(-300px) translateZ(-60px) rotateY(22deg) scale(0.78)";
+          return (
+            <div
+              key={isle.name}
+              aria-hidden
+              className="absolute top-1/2 left-1/2 flex flex-col items-center gap-3 pointer-events-none"
+              style={{
+                transform,
+                opacity: isActive ? 1 : 0.55,
+                filter: isActive ? "none" : "saturate(0.85)",
+                zIndex: isActive ? 3 : 2,
+                transition:
+                  "transform 700ms cubic-bezier(0.22,1,0.36,1), opacity 500ms ease, filter 500ms ease",
+              }}
+            >
               <div
-                key={i}
-                className={`threat-dot ${i < CURRENT_WORLD_INDEX + 1 ? "done" : ""}`}
+                className="flex flex-col items-center gap-0.5 transition-opacity duration-300"
+                style={{ opacity: isActive ? 1 : 0 }}
+              >
+                <span className="font-display text-sm font-bold tracking-tight text-black">
+                  {isle.name}
+                </span>
+              </div>
+              <div
+                className="bg-contain bg-center bg-no-repeat"
+                style={{
+                  width: 400,
+                  height: 400,
+                  backgroundImage: `url('${isle.image}')`,
+                  filter: isActive
+                    ? "drop-shadow(0 32px 40px rgba(0,0,0,0.28))"
+                    : "drop-shadow(0 16px 24px rgba(0,0,0,0.18))",
+                  animation: isActive
+                    ? "islandFloat 6s ease-in-out infinite"
+                    : undefined,
+                }}
               />
-            ))}
-          </div>
-        </div>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="px-1 pt-6">
-        <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-[var(--muted)]">
-          <span>{CURRENT_WORLD_INDEX + 1} of {TOTAL_WORLDS}</span>
-          <span>{Math.round(progress)}%</span>
-        </div>
-        <div className="progress-track">
-          <div className="progress-fill" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <PrimaryButton onClick={onStart}>Begin Your Quest →</PrimaryButton>
-        <GhostButton onClick={() => speak(INTRO_NARRATION)}>
-          Continue Journey
-        </GhostButton>
+      <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        <p className="text-center text-sm text-neutral-600">
+          Press{" "}
+          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+            Enter
+          </kbd>{" "}
+          to continue to level select
+        </p>
+        <button
+          type="button"
+          onClick={begin}
+          className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+        >
+          Continue →
+        </button>
       </div>
     </div>
   );
@@ -429,40 +487,103 @@ function WorldScreen({
   speak: Speak;
   onEnter: () => void;
 }) {
+  const currentRef = useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
-    speak("Scorched plains. Find all the letters. Spell its name to defeat it.");
+    speak("Choose an island. Tab to browse, enter to begin.");
+    currentRef.current?.focus();
   }, [speak]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      onEnter();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onEnter]);
+
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-1.5">
-        <span className="pill">
-          <span className="dot" aria-hidden />
-          <span>WORLD 1</span>
-        </span>
-        <h2 className="font-display title-glow text-center text-3xl font-bold text-[var(--accent)]">
-          The {WORLD_NAME}
+    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+          level select
+        </p>
+        <h2 className="font-display text-center text-3xl font-bold leading-none tracking-tight text-black">
+          Choose an Island
         </h2>
       </div>
 
-      <HeroIllustration tone="ember" compact />
+      <ul className="flex w-full max-w-6xl items-end justify-center gap-10 sm:gap-16">
+        {ISLANDS.map((isle, i) => {
+          const isCurrent = i === 0;
+          const isLocked = i > 0;
+          return (
+            <li key={isle.name} className="flex flex-col items-center">
+              <button
+                ref={isCurrent ? currentRef : undefined}
+                type="button"
+                disabled={isLocked}
+                onClick={isLocked ? undefined : onEnter}
+                aria-label={`Island ${i + 1}: ${isle.name}. ${
+                  isLocked ? "Locked." : "Available."
+                }`}
+                className={`group relative flex flex-col items-center gap-3 border-0 bg-transparent p-0 outline-none transition ${
+                  isCurrent
+                    ? "cursor-pointer hover:-translate-y-1"
+                    : "cursor-not-allowed"
+                }`}
+                style={{
+                  transitionDuration: "300ms",
+                  transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
+                }}
+              >
+                <div
+                  className="bg-contain bg-center bg-no-repeat"
+                  style={{
+                    width: 400,
+                    height: 400,
+                    backgroundImage: `url('${isle.image}')`,
+                    opacity: isLocked ? 0.45 : 1,
+                    filter: isLocked
+                      ? "grayscale(1) drop-shadow(0 18px 24px rgba(0,0,0,0.14))"
+                      : "drop-shadow(0 32px 38px rgba(0,0,0,0.28))",
+                    animation: isCurrent
+                      ? "islandFloat 5s ease-in-out infinite"
+                      : undefined,
+                  }}
+                />
+                <div className="flex flex-col items-center gap-1.5">
+                  <span
+                    className={`font-display text-base font-bold tracking-tight ${
+                      isLocked ? "text-neutral-400" : "text-black"
+                    }`}
+                  >
+                    {isle.name}
+                  </span>
+                  {isLocked ? (
+                    <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-neutral-400">
+                      🔒 Locked
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-black bg-black px-3 py-1 text-[10px] font-bold tracking-[0.18em] uppercase text-white">
+                      Play
+                    </span>
+                  )}
+                </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
 
-      <div className="card p-4">
-        <p className="text-xs leading-snug text-[var(--text)]">
-          The ground is cracked. Embers drift through the air.{" "}
-          <span className="text-[var(--muted)]">
-            Something here feeds on what little fire remains.
-          </span>
-        </p>
-        <p className="mt-2 text-xs font-semibold text-[var(--accent)]">
-          Find all the letters and spell the creature&apos;s name.
-        </p>
-      </div>
-
-      <PrimaryButton onClick={onEnter}>Enter the World →</PrimaryButton>
-      <p className="px-2 text-center text-[11px] leading-snug text-[var(--muted-2)]">
-        Find the letters. Learn the sounds. When you know them all — you will
-        know its name.
+      <p className="text-center text-sm text-neutral-600">
+        Press{" "}
+        <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+          Enter
+        </kbd>{" "}
+        to begin {ISLANDS[0].name}
       </p>
     </div>
   );
@@ -470,12 +591,10 @@ function WorldScreen({
 
 function LetterScreen({
   speak,
-  label,
   letter,
   onConfirm,
 }: {
   speak: Speak;
-  label: string;
   letter: string;
   onConfirm: () => void;
 }) {
@@ -486,9 +605,15 @@ function LetterScreen({
   const { dots: pressedDots } = useBrailleInput(!confirmed);
 
   useEffect(() => {
-    speak(
-      `You found a letter. It is ${letter}. Make the letter ${letter} on your device.`,
-    );
+    if (letter === "A") {
+      speak(
+        "You're in the Scorched Plains! A big scary creature is hiding here. It stole the sun! Find its three secret letters and learn its name, then you can defeat it! Your first letter is A. Make the letter A on your device.",
+      );
+    } else {
+      speak(
+        `You found a letter. It is ${letter}. Make the letter ${letter} on your device.`,
+      );
+    }
   }, [speak, letter]);
 
   useEffect(() => {
@@ -532,59 +657,67 @@ function LetterScreen({
   });
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-1.5">
-        <span className="pill">
-          <span className="dot" aria-hidden />
-          <span>LETTER FOUND</span>
-        </span>
-        <h2 className="font-display text-center text-xl font-bold text-[var(--text)]">
-          {label}
+    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+          letter found
+        </p>
+        <h2 className="font-display text-center text-[21rem] font-bold leading-none tracking-tight text-black">
+          {letter}
         </h2>
       </div>
 
-      <div className="card flex items-center justify-center gap-5 px-4 py-3">
-        <p className="font-display title-glow text-[5rem] leading-none font-bold text-[var(--accent)]">
-          {letter}
-        </p>
-        <p className="max-w-[10rem] text-left text-[11px] leading-snug text-[var(--muted)]">
-          Make the pattern on your device — keys{" "}
-          <span className="font-bold text-[var(--text)]">W A S D F G</span>{" "}
-          map to dots 1 – 6
-        </p>
-      </div>
-
-      <div key={shakeKey} className={`grid grid-cols-2 gap-2.5 ${wrongFeedback ? "shake" : ""}`}>
-        <div className="surface-inset flex flex-col items-center gap-2 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-2)]">
+      <div
+        key={shakeKey}
+        className={`flex w-full max-w-md items-start justify-center gap-12 ${wrongFeedback ? "shake" : ""}`}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
             Target
           </p>
-          <BrailleCell dots={targetDots} size="md" />
+          <BrailleCell dots={targetDots} size="lg" />
         </div>
-        <div className="surface-inset flex flex-col items-center gap-2 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-2)]">
-            You pressed
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+            You
           </p>
-          <BrailleCell dots={pressedDots} size="md" />
+          <BrailleCell dots={pressedDots} size="lg" />
         </div>
       </div>
 
-      {wrongFeedback && (
-        <p className="text-center text-xs font-semibold text-[var(--bad)]">
-          {wrongFeedback}
+      <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        <p className="text-center text-sm text-neutral-600">
+          Press{" "}
+          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+            Y H N U J M
+          </kbd>{" "}
+          for dots 1–6
         </p>
-      )}
-
-      {!confirmed ? (
-        <PrimaryButton onClick={checkLetter}>Check my letter</PrimaryButton>
-      ) : (
-        <>
-          <div className="glow-pulse flex items-center justify-center gap-2 rounded-2xl border border-[var(--good)] bg-[rgba(95,227,161,0.1)] px-4 py-2.5 text-sm font-bold text-[var(--good)]">
-            ✓ Confirmed — {letter}
-          </div>
-          <PrimaryButton onClick={onConfirm}>Continue →</PrimaryButton>
-        </>
-      )}
+        {wrongFeedback ? (
+          <p className="text-center text-xs font-semibold text-neutral-700">
+            {wrongFeedback}
+          </p>
+        ) : confirmed ? (
+          <p className="text-center text-xs font-semibold text-black">
+            ✓ Correct — {letter}
+          </p>
+        ) : (
+          <p className="text-center text-xs text-neutral-500">
+            Press{" "}
+            <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+              Enter
+            </kbd>{" "}
+            to check
+          </p>
+        )}
+        <button
+          type="button"
+          onClick={confirmed ? onConfirm : checkLetter}
+          className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+        >
+          {confirmed ? "Continue →" : "Check"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -600,7 +733,7 @@ function BlendingScreen({
 
   useEffect(() => {
     speak(
-      "You found all the letters. The word is Ash. Say it back to me. Ash.",
+      "You found all the letters! Suddenly, the boss Ash bursts out of nowhere and attacks you. Spell his name to defeat him!",
     );
   }, [speak]);
 
@@ -616,45 +749,42 @@ function BlendingScreen({
   }, [onContinue]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-1">
-        <span className="pill">
-          <span className="dot" aria-hidden />
-          <span>BLENDING</span>
-        </span>
-        <h2 className="font-display text-center text-xl font-bold text-[var(--text)]">
-          You found all the letters!
-        </h2>
-        <p className="text-xs text-[var(--muted)]">Your word is</p>
-      </div>
-
-      <div className="card p-4">
-        <p className="font-display title-glow text-center text-5xl font-bold leading-none text-[var(--accent)]">
-          Ash
+    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+          word complete
         </p>
-        <div className="mt-4 flex justify-center gap-5">
-          {letters.map((l) => (
-            <div key={l} className="flex flex-col items-center gap-1.5">
-              <BrailleCell dots={BRAILLE[l]} size="sm" />
-              <span className="font-display text-sm font-bold text-[var(--text)]">
-                {l}
-              </span>
-            </div>
-          ))}
-        </div>
+        <h2 className="font-display text-center text-[18rem] font-bold leading-none tracking-tight text-black">
+          Ash
+        </h2>
       </div>
 
-      <p className="text-center text-xs font-semibold text-[var(--accent)]">
-        Say the word back: &quot;Ash&quot;
-      </p>
-      <PrimaryButton
-        onClick={async () => {
-          await speak("Ash.");
-          onContinue();
-        }}
-      >
-        Continue →
-      </PrimaryButton>
+      <div className="flex justify-center gap-10">
+        {letters.map((l) => (
+          <div key={l} className="flex flex-col items-center gap-3">
+            <BrailleCell dots={BRAILLE[l]} size="md" />
+            <span className="font-display text-base font-bold tracking-tight text-black">
+              {l}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        <p className="text-center text-sm text-neutral-600">
+          Say it aloud: &ldquo;Ash&rdquo;
+        </p>
+        <button
+          type="button"
+          onClick={async () => {
+            await speak("Ash.");
+            onContinue();
+          }}
+          className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+        >
+          Continue →
+        </button>
+      </div>
     </div>
   );
 }
@@ -731,89 +861,130 @@ function BattleScreen({
   });
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <div className="flex flex-col items-center gap-1">
-        <span className="pill">
-          <span className="dot" aria-hidden />
-          <span>BATTLE</span>
-        </span>
-        <h2 className="font-display text-center text-xl font-bold text-[var(--text)]">
-          Spell its name!
+    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+          battle
+        </p>
+        <h2 className="font-display text-center text-3xl font-bold leading-none tracking-tight text-black">
+          {isComplete ? "Defeat it!" : "Spell its name"}
         </h2>
       </div>
 
-      <CreatureIllustration />
-
-      <div className="flex justify-center gap-2.5">
-        {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className={`letter-tile ${
-              spelled[i]
-                ? "filled"
-                : i === spelled.length
-                  ? "active"
-                  : ""
-            }`}
-          >
-            {spelled[i] ?? ""}
-          </div>
-        ))}
+      <div className="flex w-full flex-col items-center gap-2">
+        <img
+          src="/bossImages/boss.png"
+          alt=""
+          aria-hidden
+          className="h-56 w-auto object-contain transition-all duration-500"
+          style={{
+            filter: isComplete
+              ? "drop-shadow(0 32px 38px rgba(0,0,0,0.35))"
+              : "drop-shadow(0 24px 28px rgba(0,0,0,0.25))",
+            animation: "islandFloat 2.8s ease-in-out infinite",
+            transform: isComplete ? "scale(1.05)" : undefined,
+          }}
+        />
+        <p className="font-display text-2xl font-bold tracking-tight text-black">
+          Ash
+        </p>
       </div>
 
-      {!isComplete && (
-        <>
-          <p className="text-center text-[11px] text-[var(--muted)]">
-            Make the letter for{" "}
-            <span className="font-display text-sm font-bold text-[var(--accent)]">
-              {target[spelled.length]}
-            </span>{" "}
-            on your device
-          </p>
-          <div key={shakeKey} className={`grid grid-cols-2 gap-2 ${feedback ? "shake" : ""}`}>
-            <div className="surface-inset flex flex-col items-center gap-1.5 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-2)]">
-                Hint: {target[spelled.length]}
+      <div className="flex flex-col items-center gap-6">
+        <div className="flex justify-center gap-3">
+          {[0, 1, 2].map((i) => {
+            const isFilled = !!spelled[i];
+            const isActive = !isFilled && i === spelled.length;
+            return (
+              <div
+                key={i}
+                className={`flex h-14 w-12 items-center justify-center rounded-xl border font-display text-2xl font-bold tracking-tight transition ${
+                  isFilled
+                    ? "border-black bg-black text-white"
+                    : isActive
+                      ? "border-black text-black"
+                      : "border-neutral-300 text-neutral-300"
+                }`}
+              >
+                {spelled[i] ?? ""}
+              </div>
+            );
+          })}
+        </div>
+
+        {!isComplete && (
+          <div
+            key={shakeKey}
+            className={`flex items-start justify-center gap-12 ${feedback ? "shake" : ""}`}
+          >
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                {target[spelled.length]}
               </p>
-              <BrailleCell
-                dots={BRAILLE[target[spelled.length]]}
-                size="md"
-              />
+              <BrailleCell dots={BRAILLE[target[spelled.length]]} size="lg" />
             </div>
-            <div className="surface-inset flex flex-col items-center gap-1.5 p-2.5">
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--muted-2)]">
-                You pressed
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                You
               </p>
-              <BrailleCell dots={dots} size="md" />
+              <BrailleCell dots={dots} size="lg" />
             </div>
           </div>
-          {feedback && (
-            <p className="text-center text-xs font-semibold text-[var(--bad)]">
-              {feedback}
-            </p>
-          )}
-          <PrimaryButton onClick={submitLetter}>Submit letter</PrimaryButton>
-        </>
-      )}
+        )}
+      </div>
 
-      {isComplete && isCorrect && (
-        <PrimaryButton
-          onClick={async () => {
-            await speak("Ash!");
-            onWin();
-          }}
-        >
-          Say the word: &quot;ASH&quot; →
-        </PrimaryButton>
-      )}
-      {isComplete && !isCorrect && (
-        <>
-          <p className="text-center text-sm font-semibold text-[var(--bad)]">
-            Not quite. Try again.
-          </p>
-          <GhostButton onClick={reset}>Reset</GhostButton>
-        </>
-      )}
+      <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        {!isComplete && (
+          <>
+            {feedback ? (
+              <p className="text-center text-xs font-semibold text-neutral-700">
+                {feedback}
+              </p>
+            ) : (
+              <p className="text-center text-xs text-neutral-500">
+                Press{" "}
+                <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+                  Enter
+                </kbd>{" "}
+                to submit
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={submitLetter}
+              className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+            >
+              Submit
+            </button>
+          </>
+        )}
+        {isComplete && isCorrect && (
+          <button
+            type="button"
+            onClick={async () => {
+              await speak("Ash!");
+              onWin();
+            }}
+            className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+          >
+            Say &ldquo;ASH&rdquo; →
+          </button>
+        )}
+        {isComplete && !isCorrect && (
+          <>
+            <p className="text-center text-sm font-semibold text-neutral-700">
+              Try again.
+            </p>
+            <button
+              type="button"
+              onClick={reset}
+              className="w-full rounded-full border border-black bg-white px-6 py-3.5 text-sm font-semibold tracking-wide text-black transition hover:bg-neutral-100"
+            >
+              Reset
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -825,88 +996,45 @@ function VictoryScreen({
   speak: Speak;
   onNext: () => void;
 }) {
-  const defeated = 1;
-  const total = TOTAL_WORLDS;
-  const progress = (defeated / total) * 100;
-
   useEffect(() => {
     speak("Congratulations. You defeated Ash.");
   }, [speak]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col items-center gap-1">
-        <span className="pill">
-          <span className="dot" aria-hidden />
-          <span>VICTORY</span>
-        </span>
-        <h2 className="font-display title-glow text-center text-3xl font-bold text-[var(--accent)]">
-          ASH defeated!
+    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+          victory
+        </p>
+        <h2 className="font-display text-center text-5xl font-bold leading-none tracking-tight text-black">
+          Defeated
         </h2>
       </div>
 
-      <CreatureIllustration defeated />
-
-      <div className="card p-3">
-        <p className="text-center text-xs text-[var(--muted)]">
-          <span className="font-bold text-[var(--text)]">+50 XP</span> · Streak
-          extended
+      <div className="flex w-full flex-col items-center gap-3">
+        <img
+          src="/bossImages/defeatedboss.png"
+          alt=""
+          aria-hidden
+          className="h-72 w-auto object-contain"
+          style={{
+            filter: "drop-shadow(0 28px 32px rgba(0,0,0,0.25))",
+          }}
+        />
+        <p className="font-display text-2xl font-bold tracking-tight text-black">
+          Ash
         </p>
-        <div className="mt-2 flex items-center justify-center gap-1">
-          {Array.from({ length: total }).map((_, i) => (
-            <div
-              key={i}
-              className={`threat-dot ${i < defeated ? "done" : ""}`}
-            />
-          ))}
-        </div>
-        <p className="mt-2 text-center text-[11px] font-semibold text-[var(--muted)]">
-          {defeated} of {total} threats defeated
-        </p>
-        <div className="mt-2">
-          <div className="progress-track">
-            <div className="progress-fill" style={{ width: `${progress}%` }} />
-          </div>
-        </div>
       </div>
 
-      <PrimaryButton onClick={onNext}>Next World →</PrimaryButton>
+      <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        <button
+          type="button"
+          onClick={onNext}
+          className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+        >
+          Unlock Next Island →
+        </button>
+      </div>
     </div>
-  );
-}
-
-// ============================================================================
-// ICONS — minimal stroke icons matching the bottom nav in the mock
-// ============================================================================
-
-function IconHome() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 11l9-8 9 8" />
-      <path d="M5 10v10h14V10" />
-    </svg>
-  );
-}
-function IconCheck() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 12.5l2.5 2.5L16 9.5" />
-    </svg>
-  );
-}
-function IconStar() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 3 14.6 9 21 9.7 16 14 17.4 20.5 12 17.3 6.6 20.5 8 14 3 9.7 9.4 9 12 3" />
-    </svg>
-  );
-}
-function IconUser() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
-    </svg>
   );
 }

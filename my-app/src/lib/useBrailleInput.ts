@@ -2,18 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-// Makey Makey back-board defaults map to W A S D F G.
-// Braille cell numbering:
-//   1 4
-//   2 5
-//   3 6
+// Keyboard layout mirrors the braille cell visually:
+//   Y U      1 4
+//   H J  =   2 5
+//   N M      3 6
 const KEY_TO_DOT: Record<string, number> = {
-  w: 1,
-  a: 2,
-  s: 3,
-  d: 4,
-  f: 5,
-  g: 6,
+  y: 1,
+  h: 2,
+  n: 3,
+  u: 4,
+  j: 5,
+  m: 6,
 };
 
 export function useBrailleInput(enabled = true) {
