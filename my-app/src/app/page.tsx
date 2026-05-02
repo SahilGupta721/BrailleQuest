@@ -215,7 +215,7 @@ function WorldScreen({
   onEnter: () => void;
 }) {
   useEffect(() => {
-    speak("A creature lurks. Find its name.");
+    speak("Scorched plains. Find all the letters. Spell its name to defeat it.");
   }, [speak]);
 
   return (
@@ -223,17 +223,22 @@ function WorldScreen({
       <p className="text-center text-xs uppercase tracking-widest text-zinc-400">
         Screen 2 — World Intro
       </p>
-      <Illustration label="creature looming, fire" />
-      <h2 className="text-center text-3xl font-bold tracking-wider">ASH</h2>
+      <Illustration label="scorched plains, smoke" />
+      <h2 className="text-center text-2xl font-bold tracking-wide">
+        The Scorched Plains
+      </h2>
       <p className="text-center text-sm text-zinc-700">
-        A shadow creature that feeds on fire. Its name holds three letters,
-        hidden in the ruins below.
+        The ground is cracked. Embers drift through the air. Something here
+        feeds on what little fire remains.
+      </p>
+      <p className="text-center text-sm font-medium text-zinc-900">
+        Find all the letters and spell the creature&apos;s name to defeat it.
       </p>
       <PrimaryButton onClick={onEnter}>Enter the World</PrimaryButton>
       <p className="text-xs leading-relaxed text-zinc-500">
-        A creature lurks in the Scorched Plains. Its name is hidden in the
-        world. Find the letters. Learn the sounds. When you know them all — you
-        will know its name.
+        A creature lurks here. Its name is hidden in the world. Find the
+        letters. Learn the sounds. When you know them all — you will know its
+        name.
       </p>
     </div>
   );
@@ -255,8 +260,8 @@ function LetterScreen({
   const dots = BRAILLE[letter];
 
   useEffect(() => {
-    speak(`${sound}.`);
-  }, [speak, sound]);
+    speak(`You found a letter. It is ${letter}.`);
+  }, [speak, letter]);
 
   return (
     <div className="flex flex-col gap-5">
