@@ -526,88 +526,97 @@ function WorldScreen({
   }, [onEnter]);
 
   return (
-    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
-          level select
-        </p>
-        <h2 className="font-display text-center text-3xl font-bold leading-none tracking-tight text-black">
-          Choose an Island
-        </h2>
-      </div>
+    <div className="fixed inset-0 z-20 flex flex-col overflow-y-auto overscroll-y-contain bg-white px-4 py-6 text-black sm:px-6 sm:py-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center gap-6 sm:gap-8">
+        <div className="flex shrink-0 flex-col items-center gap-2">
+          <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+            level select
+          </p>
+          <h2 className="font-display text-center text-2xl font-bold leading-none tracking-tight text-black sm:text-3xl">
+            Choose an Island
+          </h2>
+        </div>
 
-      <ul className="flex w-full max-w-6xl items-end justify-center gap-10 sm:gap-16">
-        {ISLANDS.map((isle, i) => {
-          const isCurrent = i === 0;
-          const isLocked = i > 0;
-          const isFire = isle.name === "Fire Pit";
-          return (
-            <li key={isle.name} className="flex flex-col items-center">
-              <button
-                ref={isCurrent ? currentRef : undefined}
-                type="button"
-                disabled={isLocked}
-                onClick={isLocked ? undefined : onEnter}
-                aria-label={`Island ${i + 1}: ${isle.name}. ${
-                  isLocked ? "Locked." : "Available."
-                }`}
-                className={`group relative flex flex-col items-center gap-3 border-0 bg-transparent p-0 outline-none transition ${
-                  isCurrent
-                    ? "cursor-pointer hover:-translate-y-1"
-                    : "cursor-not-allowed"
-                }`}
-                style={{
-                  transitionDuration: "300ms",
-                  transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
-                }}
+        <ul className="flex w-full min-w-0 flex-1 flex-row flex-wrap content-center items-end justify-center gap-x-6 gap-y-10 sm:gap-x-10 lg:gap-x-16">
+          {ISLANDS.map((isle, i) => {
+            const isCurrent = i === 0;
+            const isLocked = i > 0;
+            const isFire = isle.name === "Fire Pit";
+            const tile = "min(92vw, 400px)";
+            const islandH = `min(50dvh, ${tile})`;
+            return (
+              <li
+                key={isle.name}
+                className="flex w-full max-w-[400px] min-w-0 flex-[1_1_260px] flex-col items-center sm:max-w-none sm:flex-[1_1_280px]"
               >
-                <div
-                  className="bg-contain bg-center bg-no-repeat"
+                <button
+                  ref={isCurrent ? currentRef : undefined}
+                  type="button"
+                  disabled={isLocked}
+                  onClick={isLocked ? undefined : onEnter}
+                  aria-label={`Island ${i + 1}: ${isle.name}. ${
+                    isLocked ? "Locked." : "Available."
+                  }`}
+                  className={`group relative flex w-full flex-col items-center gap-3 border-0 bg-transparent p-0 outline-none transition ${
+                    isCurrent
+                      ? "cursor-pointer hover:-translate-y-1"
+                      : "cursor-not-allowed"
+                  }`}
                   style={{
-                    width: 400,
-                    height: 400,
-                    backgroundImage: `url('${isle.image}')`,
-                    mixBlendMode: "multiply",
-                    opacity: isLocked ? 0.45 : 1,
-                    filter: isLocked
-                      ? "grayscale(1) drop-shadow(0 18px 24px rgba(0,0,0,0.14))"
-                      : `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}drop-shadow(0 32px 38px rgba(0,0,0,0.28))`,
-                    animation: isCurrent
-                      ? "islandFloat 5s ease-in-out infinite"
-                      : undefined,
+                    transitionDuration: "300ms",
+                    transitionTimingFunction:
+                      "cubic-bezier(0.22,1,0.36,1)",
                   }}
-                />
-                <div className="flex flex-col items-center gap-1.5">
-                  <span
-                    className={`font-display text-base font-bold tracking-tight ${
-                      isLocked ? "text-neutral-400" : "text-black"
-                    }`}
-                  >
-                    {isle.name}
-                  </span>
-                  {isLocked ? (
-                    <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-neutral-400">
-                      🔒 Locked
+                >
+                  <div
+                    className="mx-auto bg-contain bg-center bg-no-repeat"
+                    style={{
+                      width: tile,
+                      height: islandH,
+                      maxWidth: "100%",
+                      backgroundImage: `url('${isle.image}')`,
+                      mixBlendMode: "multiply",
+                      opacity: isLocked ? 0.45 : 1,
+                      filter: isLocked
+                        ? "grayscale(1) drop-shadow(0 18px 24px rgba(0,0,0,0.14))"
+                        : `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}drop-shadow(0 32px 38px rgba(0,0,0,0.28))`,
+                      animation: isCurrent
+                        ? "islandFloat 5s ease-in-out infinite"
+                        : undefined,
+                    }}
+                  />
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span
+                      className={`font-display text-center text-sm font-bold tracking-tight sm:text-base ${
+                        isLocked ? "text-neutral-400" : "text-black"
+                      }`}
+                    >
+                      {isle.name}
                     </span>
-                  ) : (
-                    <span className="rounded-full border border-black bg-black px-3 py-1 text-[10px] font-bold tracking-[0.18em] uppercase text-white">
-                      Play
-                    </span>
-                  )}
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                    {isLocked ? (
+                      <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-neutral-400">
+                        🔒 Locked
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-black bg-black px-3 py-1 text-[10px] font-bold tracking-[0.18em] uppercase text-white">
+                        Play
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
 
-      <p className="text-center text-sm text-neutral-600">
-        Press{" "}
-        <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
-          Enter
-        </kbd>{" "}
-        to begin {ISLANDS[0].name}
-      </p>
+        <p className="shrink-0 pb-2 text-center text-sm text-neutral-600 sm:pb-0">
+          Press{" "}
+          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+            Enter
+          </kbd>{" "}
+          to begin {ISLANDS[0].name}
+        </p>
+      </div>
     </div>
   );
 }
