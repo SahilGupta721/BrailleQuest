@@ -9,10 +9,12 @@ export function useSpeak() {
   const urlRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
+  const activeTextRef = useRef<string | null>(null);
   const [state, setState] = useState<SpeakState>("idle");
 
   const stop = useCallback(() => {
     requestIdRef.current += 1;
+    activeTextRef.current = null;
     if (abortRef.current) {
       abortRef.current.abort();
       abortRef.current = null;
@@ -31,7 +33,9 @@ export function useSpeak() {
 
   const speak = useCallback(
     async (text: string) => {
+      if (activeTextRef.current === text) return;
       stop();
+      activeTextRef.current = text;
       const myId = ++requestIdRef.current;
       const controller = new AbortController();
       abortRef.current = controller;
@@ -53,10 +57,33 @@ export function useSpeak() {
         if (myId !== requestIdRef.current) return;
         const url = URL.createObjectURL(blob);
         urlRef.current = url;
-        const audio = new Audio(url);
+        const audio = new Audio();
+        audio.preload = "auto";
+        audio.src = url;
         audioRef.current = audio;
-        audio.onended = () => setState("idle");
-        audio.onerror = () => setState("error");
+        audio.onended = () => {
+          activeTextRef.current = null;
+          setState("idle");
+        };
+        audio.onerror = () => {
+          activeTextRef.current = null;
+          setState("error");
+        };
+
+        await new Promise<void>((resolve) => {
+          if (audio.readyState >= 4) {
+            resolve();
+            return;
+          }
+          const onReady = () => {
+            audio.removeEventListener("canplaythrough", onReady);
+            resolve();
+          };
+          audio.addEventListener("canplaythrough", onReady);
+          audio.load();
+        });
+        if (myId !== requestIdRef.current) return;
+
         setState("playing");
         await audio.play();
       } catch (err) {

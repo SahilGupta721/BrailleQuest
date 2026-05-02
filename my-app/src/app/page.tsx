@@ -260,7 +260,9 @@ function LetterScreen({
   const dots = BRAILLE[letter];
 
   useEffect(() => {
-    speak(`You found a letter. It is ${letter}.`);
+    speak(
+      `You found a letter. It is ${letter}. Make the letter ${letter} on your device.`,
+    );
   }, [speak, letter]);
 
   return (
@@ -276,18 +278,15 @@ function LetterScreen({
       <div className="flex justify-center py-2">
         <BrailleCell dots={dots} size="lg" />
       </div>
-      <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4 text-center">
-        <p className="text-xs text-zinc-500">That pattern makes the sound</p>
-        <p className="mt-1 text-3xl font-bold">&quot;{sound}&quot;</p>
-      </div>
+      <p className="text-center text-6xl font-bold tracking-wider">{letter}</p>
       {!confirmed ? (
         <PrimaryButton
-          onClick={async () => {
-            await speak(sound);
+          onClick={() => {
+            speak(`Correct. That is ${letter}.`);
             setConfirmed(true);
           }}
         >
-          Hear: &quot;{sound}&quot;
+          Check my letter
         </PrimaryButton>
       ) : (
         <>
@@ -343,12 +342,12 @@ function BlendingScreen({
       </div>
       {step < 3 ? (
         <PrimaryButton
-          onClick={async () => {
-            await speak(SOUND[letters[step]]);
+          onClick={() => {
+            speak(`Correct. That is ${letters[step]}.`);
             setStep((s) => s + 1);
           }}
         >
-          Press &amp; Hear &quot;{SOUND[letters[step]]}&quot;
+          Check my letter
         </PrimaryButton>
       ) : (
         <>
@@ -366,7 +365,7 @@ function BlendingScreen({
               onContinue();
             }}
           >
-            Hear: &quot;Ash&quot;
+            Continue
           </PrimaryButton>
         </>
       )}
