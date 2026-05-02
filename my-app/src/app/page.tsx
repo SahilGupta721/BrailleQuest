@@ -888,6 +888,12 @@ function BattleScreen({
   }, [speak]);
 
   useEffect(() => {
+    if (isComplete && isCorrect) {
+      speak("Say Ash out loud and press Enter to defeat it.");
+    }
+  }, [isComplete, isCorrect, speak]);
+
+  useEffect(() => {
     setFeedback(null);
   }, [dots]);
 
@@ -1060,16 +1066,24 @@ function BattleScreen({
           </>
         )}
         {isComplete && isCorrect && (
-          <button
-            type="button"
-            onClick={async () => {
-              await speak("Ash!");
-              onWin();
-            }}
-            className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
-          >
-            Say &ldquo;ASH&rdquo; →
-          </button>
+          <>
+            <p className="text-center text-xs text-neutral-500">
+              Say &ldquo;Ash&rdquo; out loud and press{" "}
+              <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+                Enter
+              </kbd>
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                await speak("Ash!");
+                onWin();
+              }}
+              className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+            >
+              Say &ldquo;ASH&rdquo; →
+            </button>
+          </>
         )}
         {isComplete && !isCorrect && (
           <>

@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+const DEBOUNCE_MS = 2000;
 
 // Makey Makey back-board defaults map to W A S D F G.
 // Braille cell numbering:
@@ -18,14 +20,23 @@ const KEY_TO_DOT: Record<string, number> = {
 
 export function useBrailleInput(enabled = true) {
   const [dots, setDots] = useState<Set<number>>(new Set());
+  const lastFiredRef = useRef<Record<number, number>>({});
 
   useEffect(() => {
     if (!enabled) return;
+    lastFiredRef.current = {};
 
     function onKeyDown(e: KeyboardEvent) {
       const dot = KEY_TO_DOT[e.key.toLowerCase()];
       if (!dot) return;
       if (e.repeat) return;
+      const now = performance.now();
+      const last = lastFiredRef.current[dot] ?? 0;
+      if (now - last < DEBOUNCE_MS) {
+        e.preventDefault();
+        return;
+      }
+      lastFiredRef.current[dot] = now;
       e.preventDefault();
       setDots((prev) => {
         const next = new Set(prev);
@@ -39,7 +50,10 @@ export function useBrailleInput(enabled = true) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [enabled]);
 
-  const clear = useCallback(() => setDots(new Set()), []);
+  const clear = useCallback(() => {
+    setDots(new Set());
+    lastFiredRef.current = {};
+  }, []);
 
   return { dots, clear };
 }
