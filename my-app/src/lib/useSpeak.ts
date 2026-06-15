@@ -87,7 +87,16 @@ export function useSpeak() {
         setState("playing");
         await audio.play();
       } catch (err) {
-        if ((err as Error)?.name === "AbortError") return;
+        const e = err as Error;
+        if (e?.name === "AbortError") return;
+        // Browser autoplay policy: play() is rejected until the user
+        // interacts with the page. Stay silent — first user gesture will
+        // unlock subsequent calls.
+        if (e?.name === "NotAllowedError") {
+          setState("idle");
+          activeTextRef.current = null;
+          return;
+        }
         console.error(err);
         setState("error");
       }
