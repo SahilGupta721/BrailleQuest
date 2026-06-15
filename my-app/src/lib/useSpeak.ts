@@ -61,14 +61,6 @@ export function useSpeak() {
         audio.preload = "auto";
         audio.src = url;
         audioRef.current = audio;
-        audio.onended = () => {
-          activeTextRef.current = null;
-          setState("idle");
-        };
-        audio.onerror = () => {
-          activeTextRef.current = null;
-          setState("error");
-        };
 
         await new Promise<void>((resolve) => {
           if (audio.readyState >= 4) {
@@ -86,16 +78,28 @@ export function useSpeak() {
 
         setState("playing");
         await audio.play();
+        // Resolve `speak()` only when playback actually completes (or is
+        // cancelled / errors), so callers can `await speak(...)` to chain
+        // navigation after the narration has finished.
+        await new Promise<void>((resolve) => {
+          audio.onended = () => resolve();
+          audio.onerror = () => resolve();
+          audio.onpause = () => resolve(); // stop() pauses the audio
+        });
+        if (myId === requestIdRef.current) {
+          activeTextRef.current = null;
+          setState("idle");
+        }
       } catch (err) {
         const e = err as Error;
         if (e?.name === "AbortError") return;
         // Browser autoplay policy: play() is rejected until the user
-        // interacts with the page. Stay silent — first user gesture will
-        // unlock subsequent calls.
+        // interacts with the page. Reset state and re-throw so callers
+        // can retry on the first user gesture.
         if (e?.name === "NotAllowedError") {
           setState("idle");
           activeTextRef.current = null;
-          return;
+          throw e;
         }
         console.error(err);
         setState("error");

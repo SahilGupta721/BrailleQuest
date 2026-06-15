@@ -328,6 +328,15 @@ type Speak = (text: string) => Promise<void>;
 const INTRO_NARRATION =
   "Travel seven worlds. Learn each creature's name. Defeat them.";
 
+const WELCOME_NARRATION =
+  "Welcome to BrailleQuest. This is an audio adventure where braille becomes magic. Listen carefully, press the correct braille dots, and cast spells to defeat each creature. Let's begin your quest.";
+
+const LETTER_IMAGES: Record<string, string> = {
+  A: "/letter%20images/imageA.png",
+  S: "/letter%20images/ImageS.png",
+  H: "/letter%20images/ImageH.png",
+};
+
 const ISLANDS: { name: string; subtitle: string; image: string }[] = [
   {
     name: "Fire Pit",
@@ -362,11 +371,12 @@ function IntroScreen({
     return () => clearInterval(id);
   }, []);
 
-  // No narration on the welcome page — keep it silent. Audio starts on
-  // the next screen after the user has interacted with the page.
-
   function begin() {
     onStart();
+  }
+
+  function playWelcome() {
+    speak(WELCOME_NARRATION);
   }
 
   useEffect(() => {
@@ -448,10 +458,19 @@ function IntroScreen({
                   width: 400,
                   height: 400,
                   backgroundImage: `url('${isle.image}')`,
+<<<<<<< HEAD
                   filter: `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}${isActive
                     ? "drop-shadow(0 32px 40px rgba(0,0,0,0.28))"
                     : "drop-shadow(0 16px 24px rgba(0,0,0,0.18))"
                     }`,
+=======
+                  mixBlendMode: "multiply",
+                  filter: `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}${
+                    isActive
+                      ? "drop-shadow(0 32px 40px rgba(0,0,0,0.28))"
+                      : "drop-shadow(0 16px 24px rgba(0,0,0,0.18))"
+                  }`,
+>>>>>>> d667ca3cfc27178d9b1d57e6c5e8c6982f8adc0b
                   animation: isActive
                     ? "islandFloat 6s ease-in-out infinite"
                     : undefined,
@@ -470,6 +489,13 @@ function IntroScreen({
           </kbd>{" "}
           to continue to level select
         </p>
+        <button
+          type="button"
+          onClick={playWelcome}
+          className="w-full rounded-full border border-black bg-white px-6 py-3.5 text-sm font-semibold tracking-wide text-black transition hover:bg-neutral-100"
+        >
+          🔊 Play Welcome
+        </button>
         <button
           type="button"
           onClick={begin}
@@ -507,16 +533,18 @@ function WorldScreen({
   }, [onEnter]);
 
   return (
-    <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
-      <div className="flex flex-col items-center gap-2">
-        <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
-          level select
-        </p>
-        <h2 className="font-display text-center text-3xl font-bold leading-none tracking-tight text-black">
-          Choose an Island
-        </h2>
-      </div>
+    <div className="fixed inset-0 z-20 flex flex-col overflow-y-auto overscroll-y-contain bg-white px-4 py-6 text-black sm:px-6 sm:py-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center gap-6 sm:gap-8">
+        <div className="flex shrink-0 flex-col items-center gap-2">
+          <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
+            level select
+          </p>
+          <h2 className="font-display text-center text-2xl font-bold leading-none tracking-tight text-black sm:text-3xl">
+            Choose an Island
+          </h2>
+        </div>
 
+<<<<<<< HEAD
       <ul className="flex w-full max-w-6xl items-end justify-center gap-10 sm:gap-16">
         {ISLANDS.map((isle, i) => {
           const isCurrent = i === 0;
@@ -539,10 +567,35 @@ function WorldScreen({
                   transitionDuration: "300ms",
                   transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
                 }}
+=======
+        <ul className="flex w-full min-w-0 flex-1 flex-row flex-wrap content-center items-end justify-center gap-x-6 gap-y-10 sm:gap-x-10 lg:gap-x-16">
+          {ISLANDS.map((isle, i) => {
+            const isCurrent = i === 0;
+            const isLocked = i > 0;
+            const isFire = isle.name === "Fire Pit";
+            const tile = "min(92vw, 400px)";
+            const islandH = `min(50dvh, ${tile})`;
+            return (
+              <li
+                key={isle.name}
+                className="flex w-full max-w-[400px] min-w-0 flex-[1_1_260px] flex-col items-center sm:max-w-none sm:flex-[1_1_280px]"
+>>>>>>> d667ca3cfc27178d9b1d57e6c5e8c6982f8adc0b
               >
-                <div
-                  className="bg-contain bg-center bg-no-repeat"
+                <button
+                  ref={isCurrent ? currentRef : undefined}
+                  type="button"
+                  disabled={isLocked}
+                  onClick={isLocked ? undefined : onEnter}
+                  aria-label={`Island ${i + 1}: ${isle.name}. ${
+                    isLocked ? "Locked." : "Available."
+                  }`}
+                  className={`group relative flex w-full flex-col items-center gap-3 border-0 bg-transparent p-0 outline-none transition ${
+                    isCurrent
+                      ? "cursor-pointer hover:-translate-y-1"
+                      : "cursor-not-allowed"
+                  }`}
                   style={{
+<<<<<<< HEAD
                     width: 400,
                     height: 400,
                     backgroundImage: `url('${isle.image}')`,
@@ -565,26 +618,62 @@ function WorldScreen({
                   {isLocked ? (
                     <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-neutral-400">
                       🔒 Locked
+=======
+                    transitionDuration: "300ms",
+                    transitionTimingFunction:
+                      "cubic-bezier(0.22,1,0.36,1)",
+                  }}
+                >
+                  <div
+                    className="mx-auto bg-contain bg-center bg-no-repeat"
+                    style={{
+                      width: tile,
+                      height: islandH,
+                      maxWidth: "100%",
+                      backgroundImage: `url('${isle.image}')`,
+                      mixBlendMode: "multiply",
+                      opacity: isLocked ? 0.45 : 1,
+                      filter: isLocked
+                        ? "grayscale(1) drop-shadow(0 18px 24px rgba(0,0,0,0.14))"
+                        : `${isFire ? "sepia(1) saturate(6) hue-rotate(-30deg) " : ""}drop-shadow(0 32px 38px rgba(0,0,0,0.28))`,
+                      animation: isCurrent
+                        ? "islandFloat 5s ease-in-out infinite"
+                        : undefined,
+                    }}
+                  />
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span
+                      className={`font-display text-center text-sm font-bold tracking-tight sm:text-base ${
+                        isLocked ? "text-neutral-400" : "text-black"
+                      }`}
+                    >
+                      {isle.name}
+>>>>>>> d667ca3cfc27178d9b1d57e6c5e8c6982f8adc0b
                     </span>
-                  ) : (
-                    <span className="rounded-full border border-black bg-black px-3 py-1 text-[10px] font-bold tracking-[0.18em] uppercase text-white">
-                      Play
-                    </span>
-                  )}
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                    {isLocked ? (
+                      <span className="text-[10px] font-semibold tracking-[0.22em] uppercase text-neutral-400">
+                        🔒 Locked
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-black bg-black px-3 py-1 text-[10px] font-bold tracking-[0.18em] uppercase text-white">
+                        Play
+                      </span>
+                    )}
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
 
-      <p className="text-center text-sm text-neutral-600">
-        Press{" "}
-        <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
-          Enter
-        </kbd>{" "}
-        to begin {ISLANDS[0].name}
-      </p>
+        <p className="shrink-0 pb-2 text-center text-sm text-neutral-600 sm:pb-0">
+          Press{" "}
+          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+            Enter
+          </kbd>{" "}
+          to begin {ISLANDS[0].name}
+        </p>
+      </div>
     </div>
   );
 }
@@ -680,9 +769,18 @@ function LetterScreen({
         <p className="text-center text-[11px] tracking-[0.24em] uppercase text-neutral-500">
           letter found
         </p>
-        <h2 className="font-display text-center text-[21rem] font-bold leading-none tracking-tight text-black">
+        <img
+          src={LETTER_IMAGES[letter] ?? ""}
+          alt={`Letter ${letter}`}
+          className="h-72 w-auto object-contain"
+          style={{
+            mixBlendMode: "multiply",
+            filter: "drop-shadow(0 24px 28px rgba(0,0,0,0.18))",
+          }}
+        />
+        <p className="font-display text-2xl font-bold leading-none tracking-tight text-black">
           {letter}
-        </h2>
+        </p>
       </div>
 
       <div
@@ -847,6 +945,12 @@ function BattleScreen({
   }, [speak]);
 
   useEffect(() => {
+    if (isComplete && isCorrect) {
+      speak("Say Ash out loud and press Enter to defeat it.");
+    }
+  }, [isComplete, isCorrect, speak]);
+
+  useEffect(() => {
     setFeedback(null);
   }, [dots]);
 
@@ -913,6 +1017,7 @@ function BattleScreen({
           aria-hidden
           className="h-56 w-auto object-contain transition-all duration-500"
           style={{
+            mixBlendMode: "multiply",
             filter: isComplete
               ? "drop-shadow(0 32px 38px rgba(0,0,0,0.35))"
               : "drop-shadow(0 24px 28px rgba(0,0,0,0.25))",
@@ -949,7 +1054,7 @@ function BattleScreen({
         {!isComplete && (
           <div
             key={shakeKey}
-            className={`flex items-start justify-center gap-12 ${feedback ? "shake" : ""}`}
+            className={`flex w-full max-w-2xl items-start justify-center gap-10 ${feedback ? "shake" : ""}`}
           >
             <div className="flex flex-col items-center gap-3">
               <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
@@ -962,6 +1067,30 @@ function BattleScreen({
                 You
               </p>
               <BrailleCell dots={dots} size="lg" />
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
+                Keys
+              </p>
+              <div
+                className="grid grid-cols-2 gap-2"
+                aria-label="W A S for dots 1 2 3, D F G for dots 4 5 6"
+              >
+                {[
+                  ["W", "D"],
+                  ["A", "F"],
+                  ["S", "G"],
+                ].map(([left, right]) => (
+                  <Fragment key={left}>
+                    <kbd className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 font-mono text-xs font-semibold text-black">
+                      {left}
+                    </kbd>
+                    <kbd className="flex h-7 w-7 items-center justify-center rounded-md border border-neutral-300 bg-neutral-100 font-mono text-xs font-semibold text-black">
+                      {right}
+                    </kbd>
+                  </Fragment>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -993,16 +1122,24 @@ function BattleScreen({
           </>
         )}
         {isComplete && isCorrect && (
-          <button
-            type="button"
-            onClick={async () => {
-              await speak("Ash!");
-              onWin();
-            }}
-            className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
-          >
-            Say &ldquo;ASH&rdquo; →
-          </button>
+          <>
+            <p className="text-center text-xs text-neutral-500">
+              Say &ldquo;Ash&rdquo; out loud and press{" "}
+              <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+                Enter
+              </kbd>
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                await speak("Ash!");
+                onWin();
+              }}
+              className="w-full rounded-full border border-black bg-black px-6 py-3.5 text-sm font-semibold tracking-wide text-white transition hover:bg-neutral-800"
+            >
+              Say &ldquo;ASH&rdquo; →
+            </button>
+          </>
         )}
         {isComplete && !isCorrect && (
           <>
@@ -1036,6 +1173,16 @@ function VictoryScreen({
     );
   }, [speak]);
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      onNext();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onNext]);
+
   return (
     <div className="fixed inset-0 z-20 flex flex-col items-center justify-between gap-6 bg-white px-6 py-10 text-black">
       <div className="flex flex-col items-center gap-2">
@@ -1054,6 +1201,7 @@ function VictoryScreen({
           aria-hidden
           className="h-72 w-auto object-contain"
           style={{
+            mixBlendMode: "multiply",
             filter: "drop-shadow(0 28px 32px rgba(0,0,0,0.25))",
           }}
         />
@@ -1063,6 +1211,13 @@ function VictoryScreen({
       </div>
 
       <div className="flex w-full max-w-xs flex-col items-center gap-3">
+        <p className="text-center text-sm text-neutral-600">
+          Press{" "}
+          <kbd className="rounded-md border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs font-semibold text-black">
+            Enter
+          </kbd>{" "}
+          to return to the islands
+        </p>
         <button
           type="button"
           onClick={onNext}

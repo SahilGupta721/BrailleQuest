@@ -15,7 +15,11 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
+<<<<<<< HEAD
   title: "BrailleQuest",
+=======
+  title: "BrailleQuest — learn its name, speak its name, defeat it",
+>>>>>>> d667ca3cfc27178d9b1d57e6c5e8c6982f8adc0b
   description:
     "A braille-first audio adventure. Travel seven worlds, learn each creature's name, and restore the light.",
 };
